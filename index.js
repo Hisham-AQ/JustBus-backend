@@ -157,27 +157,31 @@ app.get("/profile", authenticateToken, async (req, res) => {
 app.put("/profile", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name, birth_date } = req.body;
+    const { name, birth_date, phone } = req.body;
 
-    if (!name && !birth_date) {
+    if (name === undefined && birth_date === undefined && phone === undefined) {
       return res.status(400).json({ message: "Nothing to update" });
-    }
-
-    if (birth_date && isNaN(Date.parse(birth_date))) {
-      return res.status(400).json({ message: "Invalid birth date" });
     }
 
     const fields = [];
     const values = [];
 
-    if (name) {
+    if (name !== undefined) {
       fields.push("name = ?");
       values.push(name);
     }
 
-    if (birth_date) {
+    if (birth_date !== undefined) {
+      if (isNaN(Date.parse(birth_date))) {
+        return res.status(400).json({ message: "Invalid birth date" });
+      }
       fields.push("birth_date = ?");
       values.push(birth_date);
+    }
+
+    if (phone !== undefined) {
+      fields.push("phone = ?");
+      values.push(phone);
     }
 
     values.push(userId);
@@ -188,16 +192,12 @@ app.put("/profile", authenticateToken, async (req, res) => {
       WHERE id = ?
     `;
 
-    console.log("Before DB query");
+    await db.query(sql, values);
 
-    await db.query(sql, values); // ✅ THIS is the key fix
-
-    console.log("After DB query");
-
-    return res.json({ message: "Profile updated successfully" });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Server error" });
+    res.json({ message: "Profile updated successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
