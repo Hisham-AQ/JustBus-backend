@@ -6,7 +6,6 @@ require("dotenv").config();
 const db = require("./config/db");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
@@ -205,6 +204,8 @@ app.put("/profile", authenticateToken, async (req, res) => {
 /* =======================
    START SERVER
 ======================= */
+const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
