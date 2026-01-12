@@ -157,31 +157,27 @@ app.get("/profile", authenticateToken, async (req, res) => {
 app.put("/profile", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name, birth_date, phone } = req.body;
+    const { name, birth_date } = req.body;
 
-    if (name === undefined && birth_date === undefined && phone === undefined) {
+    if (!name && !birth_date) {
       return res.status(400).json({ message: "Nothing to update" });
+    }
+
+    if (birth_date && isNaN(Date.parse(birth_date))) {
+      return res.status(400).json({ message: "Invalid birth date" });
     }
 
     const fields = [];
     const values = [];
 
-    if (name !== undefined) {
+    if (name) {
       fields.push("name = ?");
       values.push(name);
     }
 
-    if (birth_date !== undefined) {
-      if (isNaN(Date.parse(birth_date))) {
-        return res.status(400).json({ message: "Invalid birth date" });
-      }
+    if (birth_date) {
       fields.push("birth_date = ?");
       values.push(birth_date);
-    }
-
-    if (phone !== undefined) {
-      fields.push("phone = ?");
-      values.push(phone);
     }
 
     values.push(userId);
@@ -192,12 +188,16 @@ app.put("/profile", authenticateToken, async (req, res) => {
       WHERE id = ?
     `;
 
-    await db.query(sql, values);
+    console.log("Before DB query");
 
-    res.json({ message: "Profile updated successfully" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    await db.query(sql, values); // ✅ THIS is the key fix
+
+    console.log("After DB query");
+
+    return res.json({ message: "Profile updated successfully" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -208,4 +208,17 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+/* =========================
+   SPECIAL TRIPS (MYSQL)
+========================= */
+app.get("/special-trips", async (req, res) => {
+  try {
+    const [rows] = await db.query("SELECT * FROM SpecialTrip");
+    res.json(rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch trips" });
+  }
 });
