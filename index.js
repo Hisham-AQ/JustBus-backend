@@ -161,9 +161,9 @@ app.get("/profile", authenticateToken, async (req, res) => {
 app.put("/profile", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name, birth_date } = req.body;
+    const { name, birth_date, phone } = req.body;
 
-    if (!name && !birth_date) {
+    if (!name && !birth_date && !phone) {
       return res.status(400).json({ message: "Nothing to update" });
     }
 
@@ -184,6 +184,11 @@ app.put("/profile", authenticateToken, async (req, res) => {
       values.push(birth_date);
     }
 
+    if (phone) {
+      fields.push("phone = ?");
+      values.push(phone);
+    }
+
     values.push(userId);
 
     const sql = `
@@ -192,15 +197,18 @@ app.put("/profile", authenticateToken, async (req, res) => {
       WHERE id = ?
     `;
 
-    console.log("Before DB query");
-
-    await db.query(sql, values); // ✅ THIS is the key fix
-
-    console.log("After DB query");
+    await db.query(sql, values);
 
     return res.json({ message: "Profile updated successfully" });
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    // handle unique phone constraint
+    if (err.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({
+        message: "Phone number already in use",
+      });
+    }
+
+    console.error(err);
     return res.status(500).json({ message: "Server error" });
   }
 });
