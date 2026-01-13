@@ -43,8 +43,12 @@ app.post("/auth/register", async (req, res) => {
   try {
     const { name, email, password, role, phone, gender, birth_date } = req.body;
 
-    if (!name || !email || !password || !role) {
+    if (!name || !email || !password || !role || !phone) {
       return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    if (!/^\d{9,15}$/.test(phone)) {
+      return res.status(400).json({ message: "Invalid phone number" });
     }
 
     const [existing] = await db.execute(
