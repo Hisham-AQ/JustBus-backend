@@ -202,6 +202,55 @@ app.put("/profile", authenticateToken, async (req, res) => {
 });
 
 /* =======================
+   CHANGE PASSWORD
+======================= */
+app.put("/auth/change-password", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Missing fields" });
+    }
+
+    if (newPassword.length < 6) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters" });
+    }
+
+    // 1️⃣ Get current password hash
+    const [rows] = await db.query("SELECT password FROM users WHERE id = ?", [
+      userId,
+    ]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isValid = await bcrypt.compare(currentPassword, rows[0].password);
+
+    if (!isValid) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+
+    // 2️⃣ Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // 3️⃣ Update password
+    await db.query("UPDATE users SET password = ? WHERE id = ?", [
+      hashedPassword,
+      userId,
+    ]);
+
+    res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* =======================
    START SERVER
 ======================= */
 const PORT = process.env.PORT || 3000;
