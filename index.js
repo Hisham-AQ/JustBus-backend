@@ -381,3 +381,11 @@ app.get("/special-trips", async (req, res) => {
     res.status(500).json({ message: "Failed to fetch trips" });
   }
 });
+
+app.get('/api/cities', async (req, res) => {
+  const [rows] = await db.query(
+    `SELECT DISTINCT from_city FROM trips`
+  );
+
+  res.json(rows);
+});
