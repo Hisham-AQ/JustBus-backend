@@ -314,10 +314,13 @@ app.get('/api/trips', async (req, res) => {
     );
 
     res.json(rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Failed to fetch trips' });
-  }
+  }catch (err) {
+  console.error(err);
+  res.status(500).json({
+    message: err.message,
+    code: err.code,
+  });
+}
 });
 
 
