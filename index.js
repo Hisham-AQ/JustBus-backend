@@ -2,12 +2,21 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+const nodemailer = require("nodemailer");
 
 const db = require("./config/db");
 
 const app = express();
 
 app.use(express.json());
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 /* =======================
    JWT MIDDLEWARE
@@ -151,7 +160,7 @@ app.get("/profile", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.json(rows[0]); 
+    res.json(rows[0]); // ✅ return FLAT object
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
@@ -256,6 +265,111 @@ app.put("/auth/change-password", authenticateToken, async (req, res) => {
     ]);
 
     res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+//========== forgot password ==============
+app.post("/auth/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const [rows] = await db.query("SELECT id FROM users WHERE email = ?", [
+      email,
+    ]);
+
+    // 🔐 Security: always respond success
+    if (rows.length === 0) {
+      return res.json({
+        message: "If this email exists, a reset code has been sent",
+      });
+    }
+
+    const userId = rows[0].id;
+
+    // 🔢 Generate 6-digit OTP
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // ⏰ 15 minutes expiry
+    const expires = new Date(Date.now() + 15 * 60 * 1000);
+
+    await db.query(
+      "UPDATE users SET reset_code = ?, reset_code_expires = ? WHERE id = ?",
+      [resetCode, expires, userId]
+    );
+
+    await transporter.sendMail({
+      from: `"JustBus Support" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "JustBus Password Reset Code",
+      html: `
+        <p>You requested a password reset.</p>
+        <p><strong>Your reset code is:</strong></p>
+        <h2>${resetCode}</h2>
+        <p>This code expires in 15 minutes.</p>
+      `,
+    });
+
+    res.json({
+      message: "A reset code has been sent",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+//============= reset password =================
+app.post("/auth/reset-password", async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const [rows] = await db.query(
+      `SELECT id, reset_code, reset_code_expires
+       FROM users WHERE email = ?`,
+      [email]
+    );
+
+    if (rows.length === 0) {
+      return res.status(400).json({ message: "Invalid reset code" });
+    }
+
+    const user = rows[0];
+
+    if (
+      user.reset_code !== code ||
+      !user.reset_code_expires ||
+      new Date(user.reset_code_expires) < new Date()
+    ) {
+      return res.status(400).json({ message: "Reset code expired or invalid" });
+    }
+
+    if (newPassword.length < 6) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await db.query(
+      `UPDATE users
+       SET password = ?, reset_code = NULL, reset_code_expires = NULL
+       WHERE id = ?`,
+      [hashedPassword, user.id]
+    );
+
+    res.json({ message: "Password reset successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
