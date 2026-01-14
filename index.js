@@ -9,6 +9,16 @@ const app = express();
 
 app.use(express.json());
 
+const nodemailer = require("nodemailer");
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
 /* =======================
    JWT MIDDLEWARE
 ======================= */
@@ -269,6 +279,94 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+const crypto = require("crypto");
+
+//====== forgot password ==========
+app.post("/auth/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const [rows] = await db.execute("SELECT id FROM users WHERE email = ?", [
+      email,
+    ]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const resetToken = crypto.randomBytes(20).toString("hex");
+    const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 min
+
+    await db.execute(
+      "UPDATE users SET reset_token = ?, reset_token_expires = ? WHERE email = ?",
+      [resetToken, expires, email]
+    );
+
+    const resetLink = `https://justbus-reset-password.com/reset?token=${resetToken}&email=${email}`;
+
+    await transporter.sendMail({
+      from: `"JustBus Support" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Reset your JustBus password",
+      html: `
+        <p>You requested a password reset.</p>
+        <p>Click the link below to reset your password:</p>
+        <a href="${resetLink}">${resetLink}</a>
+        <p>This link expires in 15 minutes.</p>
+      `,
+    });
+
+    res.json({ message: "Password reset email sent" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ======== resrt password ========
+app.post("/auth/reset-password", async (req, res) => {
+  try {
+    const { email, token, newPassword } = req.body;
+
+    if (!email || !token || !newPassword) {
+      return res.status(400).json({ message: "Missing fields" });
+    }
+
+    const [rows] = await db.execute(
+      `SELECT id, reset_token_expires 
+       FROM users 
+       WHERE email = ? AND reset_token = ?`,
+      [email, token]
+    );
+
+    if (rows.length === 0) {
+      return res.status(400).json({ message: "Invalid token" });
+    }
+
+    if (new Date(rows[0].reset_token_expires) < new Date()) {
+      return res.status(400).json({ message: "Token expired" });
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+
+    await db.execute(
+      `UPDATE users 
+       SET password = ?, reset_token = NULL, reset_token_expires = NULL
+       WHERE email = ?`,
+      [hashed, email]
+    );
+
+    res.json({ message: "Password reset successful" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 /* =========================
