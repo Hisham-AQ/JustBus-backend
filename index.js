@@ -301,6 +301,7 @@ app.get('/api/trips', async (req, res) => {
         pickup_location,
         dropoff_location,
         departure_time,
+        arrival_time,
         duration_minutes,
         price,
         available_seats
