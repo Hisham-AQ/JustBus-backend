@@ -375,14 +375,6 @@ app.post("/auth/reset-password", async (req, res) => {
   }
 });
 
-/* =======================
-   START SERVER
-======================= */
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
 
 /* =========================
    SPECIAL TRIPS (MYSQL)
@@ -396,3 +388,65 @@ app.get("/special-trips", async (req, res) => {
     res.status(500).json({ message: "Failed to fetch trips" });
   }
 });
+
+app.get('/api/cities', async (req, res) => {
+  const [rows] = await db.query(
+    `SELECT DISTINCT from_city FROM trips`
+  );
+
+  res.json(rows);
+});
+
+/* =========================
+    TRIPS (MYSQL)
+========================= */
+
+app.get('/api/trips', async (req, res) => {
+  const { from, to, date } = req.query;
+
+  try {
+    const [rows] = await db.query(
+      `
+      SELECT 
+        id,
+        from_city,
+        to_city,
+        pickup_location,
+        dropoff_location,
+        departure_time,
+        arrival_time,
+        duration_minutes,
+        price,
+        available_seats
+      FROM trips
+      WHERE from_city = ?
+        AND to_city = ?
+        AND trip_date = ?
+      ORDER BY departure_time
+      `,
+      [from, to, date]
+    );
+
+    res.json(rows);
+  }catch (err) {
+  console.error(err);
+  res.status(500).json({
+    message: err.message,
+    code: err.code,
+  });
+}
+});
+
+
+/* =======================
+   START SERVER
+======================= */
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+
+
+// Hi 16/1/2026
