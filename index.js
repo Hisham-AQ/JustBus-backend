@@ -328,16 +328,16 @@ app.post("/auth/forgot-password", async (req, res) => {
 //============= reset password =================
 app.post("/auth/reset-password", async (req, res) => {
   try {
-    const { email, code, newPassword } = req.body;
+    const { code, newPassword } = req.body;
 
     if (!email || !code || !newPassword) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
     const [rows] = await db.query(
-      `SELECT id, reset_code, reset_code_expires
-       FROM users WHERE email = ?`,
-      [email]
+      `SELECT id, reset_code_expires
+   FROM users WHERE reset_code = ?`,
+      [code]
     );
 
     if (rows.length === 0) {
@@ -347,7 +347,6 @@ app.post("/auth/reset-password", async (req, res) => {
     const user = rows[0];
 
     if (
-      user.reset_code !== code ||
       !user.reset_code_expires ||
       new Date(user.reset_code_expires) < new Date()
     ) {
