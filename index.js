@@ -326,22 +326,19 @@ app.post("/auth/forgot-password", async (req, res) => {
         to: email,
         subject: "JustBus Password Reset Code",
         html: `
-      <p>Your password reset code:</p>
-      <h2>${resetCode}</h2>
-      <p>Expires in 15 minutes.</p>
-    `,
+          <p>You requested a password reset.</p>
+          <p><strong>Your reset code:</strong></p>
+          <h2>${resetCode}</h2>
+          <p>This code expires in 15 minutes.</p>
+        `,
       });
 
-      console.log("✅ Reset email sent to", email);
-    } catch (mailErr) {
-      console.error("❌ Email send failed:", mailErr);
+      console.log("✅ Reset email SENT to:", email);
+    } catch (mailError) {
+      console.error("❌ Email send FAILED:", mailError);
     }
 
-    console.log("Reset email sent successfully");
-
-    res.json({
-      message: "A reset code has been sent",
-    });
+    res.json({ message: "A reset code has been sent" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
