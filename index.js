@@ -2,6 +2,8 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+console.log("EMAIL_USER =", process.env.EMAIL_USER);
+console.log("EMAIL_PASS exists =", !!process.env.EMAIL_PASS);
 const nodemailer = require("nodemailer");
 
 const db = require("./config/db");
@@ -10,12 +12,25 @@ const app = express();
 
 app.use(express.json());
 
+//======== create transporter ========
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  tls: {
+    rejectUnauthorized: false,
+  },
+});
+
+//======== testing transporter =========
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("❌ Email transporter error:", error);
+  } else {
+    console.log("✅ Email transporter is ready");
+  }
 });
 
 /* =======================
@@ -304,17 +319,25 @@ app.post("/auth/forgot-password", async (req, res) => {
       [resetCode, expires, userId]
     );
 
-    await transporter.sendMail({
-      from: `"JustBus Support" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "JustBus Password Reset Code",
-      html: `
-        <p>You requested a password reset.</p>
-        <p><strong>Your reset code is:</strong></p>
-        <h2>${resetCode}</h2>
-        <p>This code expires in 15 minutes.</p>
-      `,
-    });
+    console.log("Sending reset email to:", email);
+    try {
+      await transporter.sendMail({
+        from: `"JustBus Support" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: "JustBus Password Reset Code",
+        html: `
+      <p>Your password reset code:</p>
+      <h2>${resetCode}</h2>
+      <p>Expires in 15 minutes.</p>
+    `,
+      });
+
+      console.log("✅ Reset email sent to", email);
+    } catch (mailErr) {
+      console.error("❌ Email send failed:", mailErr);
+    }
+
+    console.log("Reset email sent successfully");
 
     res.json({
       message: "A reset code has been sent",
@@ -375,7 +398,6 @@ app.post("/auth/reset-password", async (req, res) => {
   }
 });
 
-
 /* =========================
    SPECIAL TRIPS (MYSQL)
 ========================= */
@@ -389,10 +411,8 @@ app.get("/special-trips", async (req, res) => {
   }
 });
 
-app.get('/api/cities', async (req, res) => {
-  const [rows] = await db.query(
-    `SELECT DISTINCT from_city FROM trips`
-  );
+app.get("/api/cities", async (req, res) => {
+  const [rows] = await db.query(`SELECT DISTINCT from_city FROM trips`);
 
   res.json(rows);
 });
@@ -401,7 +421,7 @@ app.get('/api/cities', async (req, res) => {
     TRIPS (MYSQL)
 ========================= */
 
-app.get('/api/trips', async (req, res) => {
+app.get("/api/trips", async (req, res) => {
   const { from, to, date } = req.query;
 
   try {
@@ -428,15 +448,14 @@ app.get('/api/trips', async (req, res) => {
     );
 
     res.json(rows);
-  }catch (err) {
-  console.error(err);
-  res.status(500).json({
-    message: err.message,
-    code: err.code,
-  });
-}
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: err.message,
+      code: err.code,
+    });
+  }
 });
-
 
 /* =======================
    START SERVER
@@ -447,6 +466,6 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-
-
 // Hi 16/1/2026
+
+//new edit 15/1/26 6am
