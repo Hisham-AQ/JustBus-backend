@@ -408,11 +408,22 @@ app.get("/special-trips", async (req, res) => {
   }
 });
 
+
+/* =========================
+    cities (MYSQL)
+========================= */
+
+
 app.get("/api/cities", async (req, res) => {
-  const [rows] = await db.query(`SELECT DISTINCT from_city FROM trips`);
+  const [rows] = await db.query(`
+    SELECT DISTINCT from_city
+    FROM trips
+    WHERE from_city != 'JUST university'
+  `);
 
   res.json(rows);
 });
+
 
 /* =========================
     TRIPS (MYSQL)
@@ -462,6 +473,8 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+
 
 // Hi 16/1/2026
 
