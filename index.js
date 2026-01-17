@@ -465,6 +465,149 @@ app.get("/api/trips", async (req, res) => {
   }
 });
 
+
+/* =======================
+   RACE
+======================= */
+
+app.post('/api/bookings', authenticateToken, async (req, res) => {
+  const { tripId, pickup, dropoff, seats, paymentMethod } = req.body;
+  const userId = req.user.id;
+
+  const conn = await db.getConnection();
+
+  try {
+    await conn.beginTransaction();
+
+    const qrToken = require('crypto').randomUUID();
+
+    const [bookingResult] = await conn.execute(
+      `INSERT INTO bookings 
+       (user_id, trip_id, pickup_location, dropoff_location, total_price, qr_token)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        userId,
+        tripId,
+        pickup,
+        dropoff,
+        seats.length * 2.5,
+        qrToken,
+      ]
+    );
+
+    const bookingId = bookingResult.insertId;
+
+    for (const seat of seats) {
+      await conn.execute(
+        `INSERT INTO booking_seats (booking_id, trip_id, seat_number)
+         VALUES (?, ?, ?)`,
+        [bookingId, tripId, seat]
+      );
+    }
+
+    await conn.commit();
+
+    res.json({
+      success: true,
+      bookingId,
+      qrToken,
+    });
+  } catch (err) {
+    await conn.rollback();
+
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({
+        message: 'One or more seats already booked',
+      });
+    }
+
+    console.error(err);
+    res.status(500).json({ message: 'Booking failed' });
+  } finally {
+    conn.release();
+  }
+});
+/* =======================
+   SEAT - endpoint
+======================= */
+
+app.get('/api/trips/:tripId/seats', async (req, res) => {
+  const { tripId } = req.params;
+
+  const [rows] = await db.query(
+    `
+    SELECT 
+      bs.seat_number,
+      u.gender
+    FROM booking_seats bs
+    JOIN bookings b ON b.id = bs.booking_id
+    JOIN users u ON u.id = b.user_id
+    WHERE bs.trip_id = ?
+    `,
+    [tripId]
+  );
+
+  res.json({
+    reservedSeats: rows
+  });
+});
+
+
+/* =======================
+   QR
+======================= */
+
+
+app.post('/driver/scan', authenticateToken, async (req, res) => {
+  const { qrToken } = req.body;
+
+  if (!qrToken) {
+    return res.status(400).json({ message: 'Missing qrToken' });
+  }
+
+  const [rows] = await db.query(
+    `
+    SELECT b.id, b.status, t.trip_date
+    FROM bookings b
+    JOIN trips t ON t.id = b.trip_id
+    WHERE b.qr_token = ?
+    `,
+    [qrToken]
+  );
+
+  if (rows.length === 0) {
+    return res.status(404).json({ valid: false, message: 'Invalid ticket' });
+  }
+
+  const booking = rows[0];
+
+  if (booking.status !== 'confirmed') {
+    return res.json({ valid: false, message: 'Ticket already used or cancelled' });
+  }
+
+  // mark as used
+  await db.query(
+    `UPDATE bookings SET status = 'used' WHERE id = ?`,
+    [booking.id]
+  );
+
+  // log scan
+  await db.query(
+    `INSERT INTO scan_logs (booking_id, scanned_at)
+     VALUES (?, NOW())`,
+    [booking.id]
+  );
+
+  res.json({
+    valid: true,
+    bookingId: booking.id,
+    message: 'Ticket valid'
+  });
+});
+
+
+
+
 /* =======================
    START SERVER
 ======================= */
