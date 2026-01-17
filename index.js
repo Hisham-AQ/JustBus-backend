@@ -474,17 +474,42 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
   const { tripId, pickup, dropoff, seats, paymentMethod } = req.body;
   const userId = req.user.id;
 
+  if (!Array.isArray(seats) || seats.length === 0) {
+    return res.status(400).json({ message: 'No seats selected' });
+  }
+
   const conn = await db.getConnection();
 
   try {
     await conn.beginTransaction();
 
+    // 1️⃣ Check if any seat is already booked for this trip
+    const [takenSeats] = await conn.execute(
+      `
+      SELECT seat_number
+      FROM booking_seats
+      WHERE trip_id = ? AND seat_number IN (?)
+      `,
+      [tripId, seats]
+    );
+
+    if (takenSeats.length > 0) {
+      await conn.rollback();
+      return res.status(409).json({
+        message: 'One or more seats already booked',
+        seats: takenSeats.map(s => s.seat_number),
+      });
+    }
+
+    // 2️⃣ Create booking
     const qrToken = require('crypto').randomUUID();
 
     const [bookingResult] = await conn.execute(
-      `INSERT INTO bookings 
-       (user_id, trip_id, pickup_location, dropoff_location, total_price, qr_token)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `
+      INSERT INTO bookings
+      (user_id, trip_id, pickup_location, dropoff_location, total_price, qr_token)
+      VALUES (?, ?, ?, ?, ?, ?)
+      `,
       [
         userId,
         tripId,
@@ -497,17 +522,21 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
 
     const bookingId = bookingResult.insertId;
 
+    // 3️⃣ Insert booked seats
     for (const seat of seats) {
       await conn.execute(
-        `INSERT INTO booking_seats (booking_id, trip_id, seat_number)
-         VALUES (?, ?, ?)`,
+        `
+        INSERT INTO booking_seats (booking_id, trip_id, seat_number)
+        VALUES (?, ?, ?)
+        `,
         [bookingId, tripId, seat]
       );
     }
 
+    // 4️⃣ Commit transaction
     await conn.commit();
 
-    res.json({
+    return res.json({
       success: true,
       bookingId,
       qrToken,
@@ -515,18 +544,18 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
   } catch (err) {
     await conn.rollback();
 
-    if (err.code === 'ER_DUP_ENTRY') {
-      return res.status(409).json({
-        message: 'One or more seats already booked',
-      });
-    }
+    console.error('BOOKING ERROR:', err);
 
-    console.error(err);
-    res.status(500).json({ message: 'Booking failed' });
+    return res.status(500).json({
+      message: 'Booking failed',
+    });
   } finally {
     conn.release();
   }
 });
+
+
+
 /* =======================
    SEAT - endpoint
 ======================= */
