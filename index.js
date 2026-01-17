@@ -583,8 +583,10 @@ app.post('/api/bookings/confirm', authenticateToken, async (req, res) => {
   try {
     const [rows] = await conn.execute(
       `SELECT * FROM bookings
-       WHERE id = ? AND user_id = ? AND status = 'held'
-         AND hold_expires_at > NOW()`,
+       WHERE id = ?
+         AND user_id = ?
+         AND status = 'held'
+         AND hold_expires_at > UTC_TIMESTAMP()`,
       [bookingId, userId]
     );
 
@@ -601,8 +603,6 @@ app.post('/api/bookings/confirm', authenticateToken, async (req, res) => {
       [bookingId]
     );
 
-    await conn.commit();
-
     res.json({ success: true });
   } catch (e) {
     console.error('CONFIRM ERROR:', e);
@@ -611,6 +611,7 @@ app.post('/api/bookings/confirm', authenticateToken, async (req, res) => {
     conn.release();
   }
 });
+
 
 
 
