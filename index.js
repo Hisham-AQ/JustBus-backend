@@ -536,13 +536,14 @@ app.get('/api/trips/:tripId/seats', async (req, res) => {
 
   const [rows] = await db.query(
     `
-    SELECT
-      bs.seat_number,
-      u.gender
-    FROM booking_seats bs
-    JOIN bookings b ON b.id = bs.booking_id
-    JOIN users u ON u.id = b.user_id
-    WHERE bs.trip_id = ?
+SELECT
+  bs.seat_number,
+  COALESCE(u.gender, 'none') AS gender
+FROM booking_seats bs
+JOIN bookings b ON b.id = bs.booking_id
+JOIN users u ON u.id = b.user_id
+WHERE bs.trip_id = ?
+
     `,
     [tripId]
   );
