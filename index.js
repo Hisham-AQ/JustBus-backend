@@ -536,7 +536,7 @@ app.get('/api/trips/:tripId/seats', async (req, res) => {
 
   const [rows] = await db.query(
     `
-    SELECT 
+    SELECT
       bs.seat_number,
       u.gender
     FROM booking_seats bs
@@ -548,9 +548,13 @@ app.get('/api/trips/:tripId/seats', async (req, res) => {
   );
 
   res.json({
-    reservedSeats: rows
+    reservedSeats: rows.map(r => ({
+      seat_number: r.seat_number,
+      gender: r.gender
+    }))
   });
 });
+
 
 
 /* =======================
