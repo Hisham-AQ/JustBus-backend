@@ -474,19 +474,22 @@ app.post('/api/bookings/hold', authenticateToken, async (req, res) => {
   const { tripId, pickup, dropoff, seats } = req.body;
   const userId = req.user.id;
 
+  if (!Array.isArray(seats) || seats.length === 0) {
+    return res.status(400).json({ message: 'No seats selected' });
+  }
+
   const conn = await db.getConnection();
 
   try {
     await conn.beginTransaction();
 
-    // 🔒 اقفل المقاعد
+    // ✅ تحقق بدون FOR UPDATE
     const [taken] = await conn.execute(
       `
       SELECT seat_number
       FROM booking_seats
       WHERE trip_id = ?
       AND seat_number IN (${seats.map(() => '?').join(',')})
-      FOR UPDATE
       `,
       [tripId, ...seats]
     );
@@ -495,10 +498,11 @@ app.post('/api/bookings/hold', authenticateToken, async (req, res) => {
       await conn.rollback();
       return res.status(409).json({
         message: 'Seats already booked',
+        seats: taken.map(s => s.seat_number),
       });
     }
 
-    const holdExpiresAt = new Date(Date.now() + 3 * 60 * 1000); // ⏰ 3 دقائق
+    const holdExpiresAt = new Date(Date.now() + 3 * 60 * 1000);
     const qrToken = require('crypto').randomUUID();
 
     const [bookingResult] = await conn.execute(
@@ -538,12 +542,13 @@ app.post('/api/bookings/hold', authenticateToken, async (req, res) => {
     });
   } catch (err) {
     await conn.rollback();
-    console.error(err);
+    console.error('HOLD ERROR:', err);
     res.status(500).json({ message: 'Hold failed' });
   } finally {
     conn.release();
   }
 });
+
 
 
 app.post('/api/bookings/confirm', authenticateToken, async (req, res) => {
