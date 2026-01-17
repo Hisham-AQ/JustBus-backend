@@ -474,8 +474,13 @@ app.post('/api/bookings/hold', authenticateToken, async (req, res) => {
   const { tripId, pickup, dropoff, seats } = req.body;
   const userId = req.user.id;
 
+  // ✅ تحقق من البيانات
+  if (!tripId || !pickup || !dropoff) {
+    return res.status(400).json({ message: 'Missing trip data' });
+  }
+
   if (!Array.isArray(seats) || seats.length === 0) {
-    return res.status(400).json({ message: 'No seats selected' });
+    return res.status(400).json({ message: 'Seats are required' });
   }
 
   const conn = await db.getConnection();
@@ -483,7 +488,14 @@ app.post('/api/bookings/hold', authenticateToken, async (req, res) => {
   try {
     await conn.beginTransaction();
 
-    // ✅ تحقق بدون FOR UPDATE
+    // ✅ احذف الحجوزات المنتهية (مهم جدًا)
+    await conn.query(`
+      DELETE FROM bookings
+      WHERE status = 'held'
+      AND hold_expires_at < NOW()
+    `);
+
+    // ✅ تحقق هل المقاعد محجوزة
     const [taken] = await conn.execute(
       `
       SELECT seat_number
@@ -502,7 +514,8 @@ app.post('/api/bookings/hold', authenticateToken, async (req, res) => {
       });
     }
 
-    const holdExpiresAt = new Date(Date.now() + 3 * 60 * 1000);
+    // ✅ إنشاء hold
+    const holdExpiresAt = new Date(Date.now() + 3 * 60 * 1000); // 3 دقائق
     const qrToken = require('crypto').randomUUID();
 
     const [bookingResult] = await conn.execute(
@@ -524,6 +537,7 @@ app.post('/api/bookings/hold', authenticateToken, async (req, res) => {
 
     const bookingId = bookingResult.insertId;
 
+    // ✅ إدخال المقاعد
     for (const seat of seats) {
       await conn.execute(
         `
@@ -536,18 +550,23 @@ app.post('/api/bookings/hold', authenticateToken, async (req, res) => {
 
     await conn.commit();
 
-    res.json({
+    return res.json({
       bookingId,
       holdExpiresAt,
     });
   } catch (err) {
     await conn.rollback();
-    console.error('HOLD ERROR:', err);
-    res.status(500).json({ message: 'Hold failed' });
+    console.error('🔥 HOLD ERROR:', err);
+
+    return res.status(500).json({
+      message: 'Hold failed',
+      error: err.message, // 🔴 هذا المهم
+    });
   } finally {
     conn.release();
   }
 });
+
 
 
 
