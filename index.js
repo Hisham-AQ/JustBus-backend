@@ -574,30 +574,44 @@ app.post('/api/bookings/confirm', authenticateToken, async (req, res) => {
   const { bookingId } = req.body;
   const userId = req.user.id;
 
-  const [rows] = await db.query(
-    `
-    SELECT id, hold_expires_at
-    FROM bookings
-    WHERE id = ? AND user_id = ? AND status = 'held'
-    `,
-    [bookingId, userId]
-  );
-
-  if (rows.length === 0) {
-    return res.status(404).json({ message: 'Booking not found' });
+  if (!bookingId) {
+    return res.status(400).json({ message: 'bookingId required' });
   }
 
-  if (new Date(rows[0].hold_expires_at) < new Date()) {
-    return res.status(410).json({ message: 'Hold expired' });
+  const conn = await db.getConnection();
+
+  try {
+    const [rows] = await conn.execute(
+      `SELECT * FROM bookings
+       WHERE id = ? AND user_id = ? AND status = 'held'
+         AND hold_expires_at > NOW()`,
+      [bookingId, userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(409).json({
+        message: 'Hold expired or booking not found',
+      });
+    }
+
+    await conn.execute(
+      `UPDATE bookings
+       SET status = 'confirmed'
+       WHERE id = ?`,
+      [bookingId]
+    );
+
+    await conn.commit();
+
+    res.json({ success: true });
+  } catch (e) {
+    console.error('CONFIRM ERROR:', e);
+    res.status(500).json({ message: 'Confirm failed' });
+  } finally {
+    conn.release();
   }
-
-  await db.query(
-    `UPDATE bookings SET status = 'confirmed' WHERE id = ?`,
-    [bookingId]
-  );
-
-  res.json({ success: true });
 });
+
 
 
 setInterval(async () => {
