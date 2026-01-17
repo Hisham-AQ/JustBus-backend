@@ -483,23 +483,25 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
   try {
     await conn.beginTransaction();
 
-    // 1️⃣ Check if any seat is already booked for this trip
-    const [takenSeats] = await conn.execute(
-      `
-      SELECT seat_number
-      FROM booking_seats
-      WHERE trip_id = ? AND seat_number IN (?)
-      `,
-      [tripId, seats]
-    );
+const placeholders = seats.map(() => '?').join(',');
 
-    if (takenSeats.length > 0) {
-      await conn.rollback();
-      return res.status(409).json({
-        message: 'One or more seats already booked',
-        seats: takenSeats.map(s => s.seat_number),
-      });
-    }
+const [takenSeats] = await conn.execute(
+  `
+  SELECT seat_number
+  FROM booking_seats
+  WHERE trip_id = ?
+    AND seat_number IN (${placeholders})
+  `,
+  [tripId, ...seats]
+);
+
+if (takenSeats.length > 0) {
+  await conn.rollback();
+  return res.status(409).json({
+    message: 'One or more seats already booked',
+  });
+}
+
 
     // 2️⃣ Create booking
     const qrToken = require('crypto').randomUUID();
