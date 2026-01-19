@@ -1,18 +1,26 @@
+/* =========================================
+   IMPORTS & CONFIGURATION
+========================================= */
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
-console.log("EMAIL_USER =", process.env.EMAIL_USER);
-console.log("EMAIL_PASS exists =", !!process.env.EMAIL_PASS);
 const nodemailer = require("nodemailer");
 
 const db = require("./config/db");
 
+/* =========================================
+   APP INITIALIZATION
+========================================= */
 const app = express();
-
 app.use(express.json());
 
-//======== create transporter ========
+console.log("EMAIL_USER =", process.env.EMAIL_USER);
+console.log("EMAIL_PASS exists =", !!process.env.EMAIL_PASS);
+
+/* =========================================
+   EMAIL TRANSPORTER (NODEMAILER)
+========================================= */
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -24,7 +32,9 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-//======== testing transporter =========
+/* =========================================
+   TEST EMAIL TRANSPORTER
+========================================= */
 transporter.verify((error, success) => {
   if (error) {
     console.error("❌ Email transporter error:", error);
@@ -33,9 +43,9 @@ transporter.verify((error, success) => {
   }
 });
 
-/* =======================
-   JWT MIDDLEWARE
-======================= */
+/* =========================================
+   JWT AUTH MIDDLEWARE
+========================================= */
 function authenticateToken(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -53,16 +63,16 @@ function authenticateToken(req, res, next) {
   }
 }
 
-/* =======================
-   TEST
-======================= */
+/* =========================================
+   SERVER TEST ENDPOINT
+========================================= */
 app.get("/", (req, res) => {
   res.json({ message: "JustBus backend is running 🚍" });
 });
 
-/* =======================
-   REGISTER (MYSQL)
-======================= */
+/* =========================================
+   AUTH — REGISTER
+========================================= */
 app.post("/auth/register", async (req, res) => {
   try {
     const { name, email, password, role, phone, gender, birth_date } = req.body;
@@ -108,9 +118,9 @@ app.post("/auth/register", async (req, res) => {
   }
 });
 
-/* =======================
-   LOGIN (MYSQL)
-======================= */
+/* =========================================
+   AUTH — LOGIN
+========================================= */
 app.post("/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -157,6 +167,9 @@ app.post("/auth/login", async (req, res) => {
   }
 });
 
+/* =========================================
+   USER PROFILE — GET
+========================================= */
 app.get("/profile", authenticateToken, async (req, res) => {
   try {
     const [rows] = await db.query(
@@ -175,13 +188,15 @@ app.get("/profile", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.json(rows[0]); // ✅ return FLAT object
+    res.json(rows[0]); 
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
 });
 
-//info edit
+/* =========================================
+   USER PROFILE — UPDATE
+========================================= */
 app.put("/profile", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
@@ -225,7 +240,6 @@ app.put("/profile", authenticateToken, async (req, res) => {
 
     return res.json({ message: "Profile updated successfully" });
   } catch (err) {
-    // handle unique phone constraint
     if (err.code === "ER_DUP_ENTRY") {
       return res.status(409).json({
         message: "Phone number already in use",
@@ -237,9 +251,9 @@ app.put("/profile", authenticateToken, async (req, res) => {
   }
 });
 
-/* =======================
-   CHANGE PASSWORD
-======================= */
+/* =========================================
+   AUTH — CHANGE PASSWORD
+========================================= */
 app.put("/auth/change-password", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
@@ -255,7 +269,6 @@ app.put("/auth/change-password", authenticateToken, async (req, res) => {
         .json({ message: "Password must be at least 6 characters" });
     }
 
-    // 1️⃣ Get current password hash
     const [rows] = await db.query("SELECT password FROM users WHERE id = ?", [
       userId,
     ]);
@@ -270,10 +283,8 @@ app.put("/auth/change-password", authenticateToken, async (req, res) => {
       return res.status(401).json({ message: "Current password is incorrect" });
     }
 
-    // 2️⃣ Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // 3️⃣ Update password
     await db.query("UPDATE users SET password = ? WHERE id = ?", [
       hashedPassword,
       userId,
@@ -286,7 +297,9 @@ app.put("/auth/change-password", authenticateToken, async (req, res) => {
   }
 });
 
-//========== forgot password ==============
+/* =========================================
+   AUTH — FORGOT PASSWORD
+========================================= */
 app.post("/auth/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
@@ -299,7 +312,6 @@ app.post("/auth/forgot-password", async (req, res) => {
       email,
     ]);
 
-    // 🔐 Security: always respond success
     if (rows.length === 0) {
       return res.json({
         message: "If this email exists, a reset code has been sent",
@@ -308,10 +320,7 @@ app.post("/auth/forgot-password", async (req, res) => {
 
     const userId = rows[0].id;
 
-    // 🔢 Generate 6-digit OTP
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // ⏰ 15 minutes expiry
     const expires = new Date(Date.now() + 15 * 60 * 1000);
 
     await db.query(
@@ -319,24 +328,16 @@ app.post("/auth/forgot-password", async (req, res) => {
       [resetCode, expires, userId]
     );
 
-    console.log("Sending reset email to:", email);
-    try {
-      await transporter.sendMail({
-        from: `"JustBus Support" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: "JustBus Password Reset Code",
-        html: `
-          <p>You requested a password reset.</p>
-          <p><strong>Your reset code:</strong></p>
-          <h2>${resetCode}</h2>
-          <p>This code expires in 15 minutes.</p>
-        `,
-      });
-
-      console.log("✅ Reset email SENT to:", email);
-    } catch (mailError) {
-      console.error("❌ Email send FAILED:", mailError);
-    }
+    await transporter.sendMail({
+      from: `"JustBus Support" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "JustBus Password Reset Code",
+      html: `
+        <p>You requested a password reset.</p>
+        <h2>${resetCode}</h2>
+        <p>This code expires in 15 minutes.</p>
+      `,
+    });
 
     res.json({ message: "A reset code has been sent" });
   } catch (err) {
@@ -345,18 +346,20 @@ app.post("/auth/forgot-password", async (req, res) => {
   }
 });
 
-//============= reset password =================
+/* =========================================
+   AUTH — RESET PASSWORD
+========================================= */
 app.post("/auth/reset-password", async (req, res) => {
   try {
     const { code, newPassword } = req.body;
 
-    if (!email || !code || !newPassword) {
+    if (!code || !newPassword) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
     const [rows] = await db.query(
       `SELECT id, reset_code_expires
-   FROM users WHERE reset_code = ?`,
+       FROM users WHERE reset_code = ?`,
       [code]
     );
 
@@ -366,17 +369,8 @@ app.post("/auth/reset-password", async (req, res) => {
 
     const user = rows[0];
 
-    if (
-      !user.reset_code_expires ||
-      new Date(user.reset_code_expires) < new Date()
-    ) {
-      return res.status(400).json({ message: "Reset code expired or invalid" });
-    }
-
-    if (newPassword.length < 6) {
-      return res
-        .status(400)
-        .json({ message: "Password must be at least 6 characters" });
+    if (!user.reset_code_expires || new Date(user.reset_code_expires) < new Date()) {
+      return res.status(400).json({ message: "Reset code expired" });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -394,7 +388,6 @@ app.post("/auth/reset-password", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
-
 /* =========================
    SPECIAL TRIPS (MYSQL)
 ========================= */
@@ -408,12 +401,9 @@ app.get("/special-trips", async (req, res) => {
   }
 });
 
-
 /* =========================
-    cities (MYSQL)
+   CITIES (MYSQL)
 ========================= */
-
-
 app.get("/api/cities", async (req, res) => {
   const [rows] = await db.query(`
     SELECT DISTINCT from_city
@@ -424,11 +414,9 @@ app.get("/api/cities", async (req, res) => {
   res.json(rows);
 });
 
-
 /* =========================
-    TRIPS (MYSQL)
+   TRIPS SEARCH (MYSQL)
 ========================= */
-
 app.get("/api/trips", async (req, res) => {
   const { from, to, date } = req.query;
 
@@ -465,16 +453,13 @@ app.get("/api/trips", async (req, res) => {
   }
 });
 
-
-/* =======================
-   RACE
-======================= */
-
+/* =========================
+   BOOKINGS — HOLD SEATS (RACE CONDITION SAFE)
+========================= */
 app.post('/api/bookings/hold', authenticateToken, async (req, res) => {
   const { tripId, pickup, dropoff, seats } = req.body;
   const userId = req.user.id;
 
-  // ✅ تحقق من البيانات
   if (!tripId || !pickup || !dropoff) {
     return res.status(400).json({ message: 'Missing trip data' });
   }
@@ -488,14 +473,12 @@ app.post('/api/bookings/hold', authenticateToken, async (req, res) => {
   try {
     await conn.beginTransaction();
 
-    // ✅ احذف الحجوزات المنتهية (مهم جدًا)
     await conn.query(`
       DELETE FROM bookings
       WHERE status = 'held'
       AND hold_expires_at < NOW()
     `);
 
-    // ✅ تحقق هل المقاعد محجوزة
     const [taken] = await conn.execute(
       `
       SELECT seat_number
@@ -514,8 +497,7 @@ app.post('/api/bookings/hold', authenticateToken, async (req, res) => {
       });
     }
 
-    // ✅ إنشاء hold
-    const holdExpiresAt = new Date(Date.now() + 3 * 60 * 1000); // 3 دقائق
+    const holdExpiresAt = new Date(Date.now() + 3 * 60 * 1000);
     const qrToken = require('crypto').randomUUID();
 
     const [bookingResult] = await conn.execute(
@@ -537,7 +519,6 @@ app.post('/api/bookings/hold', authenticateToken, async (req, res) => {
 
     const bookingId = bookingResult.insertId;
 
-    // ✅ إدخال المقاعد
     for (const seat of seats) {
       await conn.execute(
         `
@@ -556,20 +537,20 @@ app.post('/api/bookings/hold', authenticateToken, async (req, res) => {
     });
   } catch (err) {
     await conn.rollback();
-    console.error('🔥 HOLD ERROR:', err);
+    console.error('HOLD ERROR:', err);
 
     return res.status(500).json({
       message: 'Hold failed',
-      error: err.message, // 🔴 هذا المهم
+      error: err.message,
     });
   } finally {
     conn.release();
   }
 });
 
-
-
-
+/* =========================
+   BOOKINGS — CONFIRM
+========================= */
 app.post('/api/bookings/confirm', authenticateToken, async (req, res) => {
   const { bookingId } = req.body;
   const userId = req.user.id;
@@ -612,9 +593,9 @@ app.post('/api/bookings/confirm', authenticateToken, async (req, res) => {
   }
 });
 
-
-
-
+/* =========================
+   CLEANUP EXPIRED HOLDS (CRON)
+========================= */
 setInterval(async () => {
   await db.query(`
     DELETE FROM bookings
@@ -623,23 +604,21 @@ setInterval(async () => {
   `);
 }, 60 * 1000);
 
-/* =======================
-   SEAT - endpoint
-======================= */
-
+/* =========================
+   SEAT STATUS — PER TRIP
+========================= */
 app.get('/api/trips/:tripId/seats', async (req, res) => {
   const { tripId } = req.params;
 
   const [rows] = await db.query(
     `
-SELECT
-  bs.seat_number,
-  COALESCE(u.gender, 'none') AS gender
-FROM booking_seats bs
-JOIN bookings b ON b.id = bs.booking_id
-JOIN users u ON u.id = b.user_id
-WHERE bs.trip_id = ?
-
+    SELECT
+      bs.seat_number,
+      COALESCE(u.gender, 'none') AS gender
+    FROM booking_seats bs
+    JOIN bookings b ON b.id = bs.booking_id
+    JOIN users u ON u.id = b.user_id
+    WHERE bs.trip_id = ?
     `,
     [tripId]
   );
@@ -652,13 +631,9 @@ WHERE bs.trip_id = ?
   });
 });
 
-
-
-/* =======================
-   QR
-======================= */
-
-
+/* =========================
+   DRIVER — QR SCAN
+========================= */
 app.post('/driver/scan', authenticateToken, async (req, res) => {
   const { qrToken } = req.body;
 
@@ -686,13 +661,11 @@ app.post('/driver/scan', authenticateToken, async (req, res) => {
     return res.json({ valid: false, message: 'Ticket already used or cancelled' });
   }
 
-  // mark as used
   await db.query(
     `UPDATE bookings SET status = 'used' WHERE id = ?`,
     [booking.id]
   );
 
-  // log scan
   await db.query(
     `INSERT INTO scan_logs (booking_id, scanned_at)
      VALUES (?, NOW())`,
@@ -706,20 +679,11 @@ app.post('/driver/scan', authenticateToken, async (req, res) => {
   });
 });
 
-
-
-
-/* =======================
+/* =========================================
    START SERVER
-======================= */
+========================================= */
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-
-
-// Hi 16/1/2026
-
-//new edit 15/1/26 6am
