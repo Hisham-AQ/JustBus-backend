@@ -5,13 +5,7 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
-<<<<<<< HEAD
-console.log("EMAIL_USER =", process.env.EMAIL_USER);
-console.log("EMAIL_PASS exists =", !!process.env.EMAIL_PASS);
 
-=======
-const nodemailer = require("nodemailer");
->>>>>>> bbbc0b20a413c0bd27a5fe083c4d6fa8113ae5cc
 
 const db = require("./config/db");
 
@@ -21,7 +15,6 @@ const db = require("./config/db");
 const app = express();
 app.use(express.json());
 
-<<<<<<< HEAD
 //brevo api
 const brevo = require('@getbrevo/brevo');
 
@@ -30,35 +23,6 @@ const apiKey = client.authentications['api-key'];
 apiKey.apiKey = process.env.BREVO_API_KEY;
 
 const emailApi = new brevo.TransactionalEmailsApi();
-=======
-console.log("EMAIL_USER =", process.env.EMAIL_USER);
-console.log("EMAIL_PASS exists =", !!process.env.EMAIL_PASS);
-
-/* =========================================
-   EMAIL TRANSPORTER (NODEMAILER)
-========================================= */
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-});
-
-/* =========================================
-   TEST EMAIL TRANSPORTER
-========================================= */
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("❌ Email transporter error:", error);
-  } else {
-    console.log("✅ Email transporter is ready");
-  }
-});
->>>>>>> bbbc0b20a413c0bd27a5fe083c4d6fa8113ae5cc
 
 /* =========================================
    JWT AUTH MIDDLEWARE
@@ -199,14 +163,9 @@ app.post("/auth/login", async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
-
-
-=======
 /* =========================================
    USER PROFILE — GET
 ========================================= */
->>>>>>> bbbc0b20a413c0bd27a5fe083c4d6fa8113ae5cc
 app.get("/profile", authenticateToken, async (req, res) => {
   try {
     const [rows] = await db.query(
@@ -288,15 +247,9 @@ app.put("/profile", authenticateToken, async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
 /* =======================
    CHANGE PASSWORD while you logged in
 ======================= */
-=======
-/* =========================================
-   AUTH — CHANGE PASSWORD
-========================================= */
->>>>>>> bbbc0b20a413c0bd27a5fe083c4d6fa8113ae5cc
 app.put("/auth/change-password", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
@@ -371,7 +324,6 @@ app.post("/auth/forgot-password", async (req, res) => {
       [resetCode, expires, userId]
     );
 
-<<<<<<< HEAD
     try {
   await emailApi.sendTransacEmail({
     sender: {
@@ -392,18 +344,6 @@ app.post("/auth/forgot-password", async (req, res) => {
   console.error("Email failed:", emailError);
   return res.status(500).json({ message: "Failed to send email" });
 }
-=======
-    await transporter.sendMail({
-      from: `"JustBus Support" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "JustBus Password Reset Code",
-      html: `
-        <p>You requested a password reset.</p>
-        <h2>${resetCode}</h2>
-        <p>This code expires in 15 minutes.</p>
-      `,
-    });
->>>>>>> bbbc0b20a413c0bd27a5fe083c4d6fa8113ae5cc
 
     res.json({ message: "A reset code has been sent" });
   } catch (err) {
@@ -614,15 +554,9 @@ app.post('/api/bookings/hold', authenticateToken, async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
-
-
-//============= confirm booking ==============
-=======
 /* =========================
    BOOKINGS — CONFIRM
 ========================= */
->>>>>>> bbbc0b20a413c0bd27a5fe083c4d6fa8113ae5cc
 app.post('/api/bookings/confirm', authenticateToken, async (req, res) => {
   const { bookingId } = req.body;
   const userId = req.user.id;
@@ -651,8 +585,8 @@ app.post('/api/bookings/confirm', authenticateToken, async (req, res) => {
 
     await conn.execute(
       `UPDATE bookings
-       SET status = 'confirmed'
-       WHERE id = ?`,
+      SET status = 'confirmed'
+      WHERE id = ?`,
       [bookingId]
     );
 
@@ -665,15 +599,9 @@ app.post('/api/bookings/confirm', authenticateToken, async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
-
-
-/*
-=======
 /* =========================
    CLEANUP EXPIRED HOLDS (CRON)
 ========================= */
->>>>>>> bbbc0b20a413c0bd27a5fe083c4d6fa8113ae5cc
 setInterval(async () => {
   await db.query(`
     DELETE FROM bookings
@@ -681,7 +609,6 @@ setInterval(async () => {
     AND hold_expires_at < NOW()
   `);
 }, 60 * 1000);
-*/
 
 /* =========================
    SEAT STATUS — PER TRIP
