@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 console.log("EMAIL_USER =", process.env.EMAIL_USER);
 console.log("EMAIL_PASS exists =", !!process.env.EMAIL_PASS);
-const nodemailer = require("nodemailer");
+
 
 const db = require("./config/db");
 
@@ -12,26 +12,14 @@ const app = express();
 
 app.use(express.json());
 
-//======== create transporter ========
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-});
+//brevo api
+const brevo = require('@getbrevo/brevo');
 
-//======== testing transporter =========
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("❌ Email transporter error:", error);
-  } else {
-    console.log("✅ Email transporter is ready");
-  }
-});
+const client = brevo.ApiClient.instance;
+const apiKey = client.authentications['api-key'];
+apiKey.apiKey = process.env.BREVO_API_KEY;
+
+const emailApi = new brevo.TransactionalEmailsApi();
 
 /* =======================
    JWT MIDDLEWARE
@@ -103,9 +91,24 @@ app.post("/auth/register", async (req, res) => {
 
     res.status(201).json({ message: "User registered successfully" });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+  console.error(err);
+
+  if (err.code === "ER_DUP_ENTRY") {
+    if (err.sqlMessage.includes("phone")) {
+      return res.status(409).json({
+        message: "Phone number already exists",
+      });
+    }
+
+    if (err.sqlMessage.includes("email")) {
+      return res.status(409).json({
+        message: "Email already exists",
+      });
+    }
   }
+
+  return res.status(500).json({ message: "Server error" });
+}
 });
 
 /* =======================
@@ -156,6 +159,8 @@ app.post("/auth/login", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+
 
 app.get("/profile", authenticateToken, async (req, res) => {
   try {
@@ -238,7 +243,7 @@ app.put("/profile", authenticateToken, async (req, res) => {
 });
 
 /* =======================
-   CHANGE PASSWORD
+   CHANGE PASSWORD while you logged in
 ======================= */
 app.put("/auth/change-password", authenticateToken, async (req, res) => {
   try {
@@ -319,24 +324,26 @@ app.post("/auth/forgot-password", async (req, res) => {
       [resetCode, expires, userId]
     );
 
-    console.log("Sending reset email to:", email);
     try {
-      await transporter.sendMail({
-        from: `"JustBus Support" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: "JustBus Password Reset Code",
-        html: `
-          <p>You requested a password reset.</p>
-          <p><strong>Your reset code:</strong></p>
-          <h2>${resetCode}</h2>
-          <p>This code expires in 15 minutes.</p>
-        `,
-      });
-
-      console.log("✅ Reset email SENT to:", email);
-    } catch (mailError) {
-      console.error("❌ Email send FAILED:", mailError);
-    }
+  await emailApi.sendTransacEmail({
+    sender: {
+      email: "smashni02@gmail.com",
+      name: "JustBus Support",
+    },
+    to: [{ email }],
+    subject: "JustBus Password Reset Code",
+    htmlContent: `
+      <p>You requested a password reset.</p>
+      <p><strong>Your reset code:</strong></p>
+      <h2>${resetCode}</h2>
+      <p>This code expires in 15 minutes.</p>
+      <p>If you didn’t request this, ignore this email.</p>
+    `,
+  });
+} catch (emailError) {
+  console.error("Email failed:", emailError);
+  return res.status(500).json({ message: "Failed to send email" });
+}
 
     res.json({ message: "A reset code has been sent" });
   } catch (err) {
@@ -350,7 +357,7 @@ app.post("/auth/reset-password", async (req, res) => {
   try {
     const { code, newPassword } = req.body;
 
-    if (!email || !code || !newPassword) {
+    if (!code || !newPassword) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -569,7 +576,7 @@ app.post('/api/bookings/hold', authenticateToken, async (req, res) => {
 
 
 
-
+//============= confirm booking ==============
 app.post('/api/bookings/confirm', authenticateToken, async (req, res) => {
   const { bookingId } = req.body;
   const userId = req.user.id;
@@ -614,7 +621,7 @@ app.post('/api/bookings/confirm', authenticateToken, async (req, res) => {
 
 
 
-
+/*
 setInterval(async () => {
   await db.query(`
     DELETE FROM bookings
@@ -622,6 +629,7 @@ setInterval(async () => {
     AND hold_expires_at < NOW()
   `);
 }, 60 * 1000);
+*/
 
 /* =======================
    SEAT - endpoint
