@@ -5,7 +5,7 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
-
+const nodemailer = require("nodemailer");
 
 const db = require("./config/db");
 
@@ -15,14 +15,33 @@ const db = require("./config/db");
 const app = express();
 app.use(express.json());
 
-//brevo api
-const brevo = require('@getbrevo/brevo');
+console.log("EMAIL_USER =", process.env.EMAIL_USER);
+console.log("EMAIL_PASS exists =", !!process.env.EMAIL_PASS);
 
-const client = brevo.ApiClient.instance;
-const apiKey = client.authentications['api-key'];
-apiKey.apiKey = process.env.BREVO_API_KEY;
+/* =========================================
+   EMAIL TRANSPORTER (NODEMAILER)
+========================================= */
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false,
+  },
+});
 
-const emailApi = new brevo.TransactionalEmailsApi();
+/* =========================================
+   TEST EMAIL TRANSPORTER
+========================================= */
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("❌ Email transporter error:", error);
+  } else {
+    console.log("✅ Email transporter is ready");
+  }
+});
 
 /* =========================================
    JWT AUTH MIDDLEWARE
@@ -94,24 +113,9 @@ app.post("/auth/register", async (req, res) => {
 
     res.status(201).json({ message: "User registered successfully" });
   } catch (err) {
-  console.error(err);
-
-  if (err.code === "ER_DUP_ENTRY") {
-    if (err.sqlMessage.includes("phone")) {
-      return res.status(409).json({
-        message: "Phone number already exists",
-      });
-    }
-
-    if (err.sqlMessage.includes("email")) {
-      return res.status(409).json({
-        message: "Email already exists",
-      });
-    }
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
-
-  return res.status(500).json({ message: "Server error" });
-}
 });
 
 /* =========================================
@@ -247,9 +251,9 @@ app.put("/profile", authenticateToken, async (req, res) => {
   }
 });
 
-/* =======================
-   CHANGE PASSWORD while you logged in
-======================= */
+/* =========================================
+   AUTH — CHANGE PASSWORD
+========================================= */
 app.put("/auth/change-password", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
@@ -324,26 +328,16 @@ app.post("/auth/forgot-password", async (req, res) => {
       [resetCode, expires, userId]
     );
 
-    try {
-  await emailApi.sendTransacEmail({
-    sender: {
-      email: "smashni02@gmail.com",
-      name: "JustBus Support",
-    },
-    to: [{ email }],
-    subject: "JustBus Password Reset Code",
-    htmlContent: `
-      <p>You requested a password reset.</p>
-      <p><strong>Your reset code:</strong></p>
-      <h2>${resetCode}</h2>
-      <p>This code expires in 15 minutes.</p>
-      <p>If you didn’t request this, ignore this email.</p>
-    `,
-  });
-} catch (emailError) {
-  console.error("Email failed:", emailError);
-  return res.status(500).json({ message: "Failed to send email" });
-}
+    await transporter.sendMail({
+      from: `"JustBus Support" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "JustBus Password Reset Code",
+      html: `
+        <p>You requested a password reset.</p>
+        <h2>${resetCode}</h2>
+        <p>This code expires in 15 minutes.</p>
+      `,
+    });
 
     res.json({ message: "A reset code has been sent" });
   } catch (err) {
@@ -585,8 +579,8 @@ app.post('/api/bookings/confirm', authenticateToken, async (req, res) => {
 
     await conn.execute(
       `UPDATE bookings
-      SET status = 'confirmed'
-      WHERE id = ?`,
+       SET status = 'confirmed'
+       WHERE id = ?`,
       [bookingId]
     );
 
@@ -684,6 +678,52 @@ app.post('/driver/scan', authenticateToken, async (req, res) => {
     message: 'Ticket valid'
   });
 });
+
+/* =========================
+  parcels 
+========================= */
+
+app.post("/api/parcels", authenticateUser, async (req, res) => {     //new add 26-4
+  const userId = req.user.id;
+
+  const {
+    pickup_location,
+    dropoff_location,
+    parcel_type,
+    weight,
+    delivery_type,
+    notes,
+    price
+  } = req.body;
+
+  try {
+    const query = `
+      INSERT INTO parcel_requests
+      (user_id, pickup_location, dropoff_location, parcel_type, weight, delivery_type, notes, price)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    await db.execute(query, [
+      userId,
+      pickup_location,
+      dropoff_location,
+      parcel_type,
+      weight,
+      delivery_type,
+      notes,
+      price
+    ]);
+
+    res.json({ message: "Parcel request submitted" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
+
 
 /* =========================================
    START SERVER
