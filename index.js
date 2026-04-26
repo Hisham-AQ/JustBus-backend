@@ -683,7 +683,7 @@ app.post('/driver/scan', authenticateToken, async (req, res) => {
   parcels 
 ========================= */
 
-app.post("/api/parcels", authenticateUser, async (req, res) => {     //new add 26-4
+app.post("/api/parcels", authenticateToken, async (req, res) => {     //new add 26-4
   const userId = req.user.id;
 
   const {
