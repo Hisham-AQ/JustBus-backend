@@ -683,7 +683,7 @@ app.post('/driver/scan', authenticateToken, async (req, res) => {
   parcels 
 ========================= */
 
-app.post("/api/parcels", authenticateToken, async (req, res) => {     //new add 26-4
+app.post("/api/parcels", authenticateToken, async (req, res) => {
   const userId = req.user.id;
 
   const {
@@ -697,10 +697,16 @@ app.post("/api/parcels", authenticateToken, async (req, res) => {     //new add 
   } = req.body;
 
   try {
+    // 🎯 Generate Order Number
+    const orderNumber = "ORD-" + Date.now();
+
+    // 🔐 Generate 6-digit PIN
+    const pinCode = Math.floor(100000 + Math.random() * 900000).toString();
+
     const query = `
       INSERT INTO parcel_requests
-      (user_id, pickup_location, dropoff_location, parcel_type, weight, delivery_type, notes, price)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      (user_id, pickup_location, dropoff_location, parcel_type, weight, delivery_type, notes, price, order_number, pin_code)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     await db.execute(query, [
@@ -711,17 +717,22 @@ app.post("/api/parcels", authenticateToken, async (req, res) => {     //new add 
       weight,
       delivery_type,
       notes,
-      price
+      price,
+      orderNumber,
+      pinCode
     ]);
 
-    res.json({ message: "Parcel request submitted" });
+    res.json({
+      message: "Parcel request submitted",
+      orderNumber,
+      pinCode
+    });
 
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 });
-
 
 
 
