@@ -1,11 +1,12 @@
 /* =========================================
    IMPORTS & CONFIGURATION
 ========================================= */
+const axios = require("axios");
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
-const nodemailer = require("nodemailer");
+
 
 const db = require("./config/db");
 
@@ -15,33 +16,11 @@ const db = require("./config/db");
 const app = express();
 app.use(express.json());
 
-console.log("EMAIL_USER =", process.env.EMAIL_USER);
-console.log("EMAIL_PASS exists =", !!process.env.EMAIL_PASS);
 
-/* =========================================
-   EMAIL TRANSPORTER (NODEMAILER)
-========================================= */
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-});
 
-/* =========================================
-   TEST EMAIL TRANSPORTER
-========================================= */
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("❌ Email transporter error:", error);
-  } else {
-    console.log("✅ Email transporter is ready");
-  }
-});
+
+
+
 
 /* =========================================
    JWT AUTH MIDDLEWARE
@@ -328,16 +307,28 @@ app.post("/auth/forgot-password", async (req, res) => {
       [resetCode, expires, userId]
     );
 
-    await transporter.sendMail({
-      from: `"JustBus Support" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "JustBus Password Reset Code",
-      html: `
-        <p>You requested a password reset.</p>
-        <h2>${resetCode}</h2>
-        <p>This code expires in 15 minutes.</p>
-      `,
-    });
+    await axios.post(
+  "https://api.brevo.com/v3/smtp/email",
+  {
+    sender: {
+      email: "your_verified_email@gmail.com",
+      name: "JustBus Support",
+    },
+    to: [{ email }],
+    subject: "JustBus Password Reset Code",
+    htmlContent: `
+      <p>You requested a password reset.</p>
+      <h2>${resetCode}</h2>
+      <p>This code expires in 15 minutes.</p>
+    `,
+  },
+  {
+    headers: {
+      "api-key": process.env.BREVO_API_KEY,
+      "Content-Type": "application/json",
+    },
+  }
+);
 
     res.json({ message: "A reset code has been sent" });
   } catch (err) {
@@ -597,11 +588,15 @@ app.post('/api/bookings/confirm', authenticateToken, async (req, res) => {
    CLEANUP EXPIRED HOLDS (CRON)
 ========================= */
 setInterval(async () => {
-  await db.query(`
-    DELETE FROM bookings
-    WHERE status = 'held'
-    AND hold_expires_at < NOW()
-  `);
+  try {
+    await db.query(`
+      DELETE FROM bookings
+      WHERE status = 'held'
+      AND hold_expires_at < NOW()
+    `);
+  } catch (err) {
+    console.error("Cleanup job error:", err.message);
+  }
 }, 60 * 1000);
 
 /* =========================
