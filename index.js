@@ -697,19 +697,13 @@ app.post("/api/parcels", authenticateToken, async (req, res) => {
   } = req.body;
 
   try {
-    // 🎯 Generate Order Number
-    const orderNumber = "ORD-" + Date.now();
-
-    // 🔐 Generate 6-digit PIN
     const pinCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    const query = `
+    const [result] = await db.execute(`
       INSERT INTO parcel_requests
-      (user_id, pickup_location, dropoff_location, parcel_type, weight, delivery_type, notes, price, order_number, pin_code)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    await db.execute(query, [
+      (user_id, pickup_location, dropoff_location, parcel_type, weight, delivery_type, notes, price, pin_code)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
       userId,
       pickup_location,
       dropoff_location,
@@ -718,9 +712,16 @@ app.post("/api/parcels", authenticateToken, async (req, res) => {
       delivery_type,
       notes,
       price,
-      orderNumber,
       pinCode
     ]);
+
+    const orderNumber = "ORD-" + String(result.insertId).padStart(4, '0');
+
+    await db.execute(
+      "UPDATE parcel_requests SET order_number = ? WHERE id = ?",
+      [orderNumber, result.insertId]
+    );
+
 
     res.json({
       message: "Parcel request submitted",
