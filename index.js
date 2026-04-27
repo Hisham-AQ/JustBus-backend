@@ -473,6 +473,25 @@ app.post("/api/special-trips/book", authenticateToken, async (req, res) => {
 });
 
 /* =========================
+   wallet
+========================= */
+
+app.get("/api/wallet", authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+
+  const [rows] = await db.query(
+    "SELECT wallet_balance FROM users WHERE id = ?",
+    [userId]
+  );
+
+  res.json({
+    balance: rows[0].wallet_balance
+  });
+});
+
+
+
+/* =========================
    CARDS
 ========================= */
 
