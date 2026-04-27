@@ -5,7 +5,7 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
-const nodemailer = require("nodemailer");
+
 
 const db = require("./config/db");
 
@@ -15,33 +15,13 @@ const db = require("./config/db");
 const app = express();
 app.use(express.json());
 
-console.log("EMAIL_USER =", process.env.EMAIL_USER);
-console.log("EMAIL_PASS exists =", !!process.env.EMAIL_PASS);
+const brevo = require('@getbrevo/brevo');
 
-/* =========================================
-   EMAIL TRANSPORTER (NODEMAILER)
-========================================= */
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-});
+const client = brevo.ApiClient.instance;
+const apiKey = client.authentications['api-key'];
+apiKey.apiKey = process.env.BREVO_API_KEY;
 
-/* =========================================
-   TEST EMAIL TRANSPORTER
-========================================= */
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("❌ Email transporter error:", error);
-  } else {
-    console.log("✅ Email transporter is ready");
-  }
-});
+const emailApi = new brevo.TransactionalEmailsApi();
 
 /* =========================================
    JWT AUTH MIDDLEWARE
@@ -328,16 +308,19 @@ app.post("/auth/forgot-password", async (req, res) => {
       [resetCode, expires, userId]
     );
 
-    await transporter.sendMail({
-      from: `"JustBus Support" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "JustBus Password Reset Code",
-      html: `
-        <p>You requested a password reset.</p>
-        <h2>${resetCode}</h2>
-        <p>This code expires in 15 minutes.</p>
-      `,
-    });
+    await emailApi.sendTransacEmail({
+  sender: {
+    email: "your@email.com",
+    name: "JustBus Support",
+  },
+  to: [{ email }],
+  subject: "JustBus Password Reset Code",
+  htmlContent: `
+    <p>You requested a password reset.</p>
+    <h2>${resetCode}</h2>
+    <p>This code expires in 15 minutes.</p>
+  `,
+});
 
     res.json({ message: "A reset code has been sent" });
   } catch (err) {
