@@ -597,11 +597,15 @@ app.post('/api/bookings/confirm', authenticateToken, async (req, res) => {
    CLEANUP EXPIRED HOLDS (CRON)
 ========================= */
 setInterval(async () => {
-  await db.query(`
-    DELETE FROM bookings
-    WHERE status = 'held'
-    AND hold_expires_at < NOW()
-  `);
+  try {
+    await db.query(`
+      DELETE FROM bookings
+      WHERE status = 'held'
+      AND hold_expires_at < NOW()
+    `);
+  } catch (err) {
+    console.error("Cleanup job error:", err.message);
+  }
 }, 60 * 1000);
 
 /* =========================
