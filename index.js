@@ -382,15 +382,99 @@ app.post("/auth/reset-password", async (req, res) => {
 /* =========================
    SPECIAL TRIPS (MYSQL)
 ========================= */
-app.get("/special-trips", async (req, res) => {
+app.get("/api/special-trips", async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM SpecialTrip");
+    const [rows] = await db.query("SELECT * FROM special_trips");
     res.json(rows);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Failed to fetch trips" });
   }
 });
+
+app.get("/api/special-trips/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [rows] = await db.query(
+      "SELECT * FROM special_trips WHERE id = ?",
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Trip not found" });
+    }
+
+    res.json(rows[0]);
+
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+app.post("/api/special-trips/book", authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+  const { tripId } = req.body;
+
+  try {
+    // 🧾 trip
+    const [tripRows] = await db.query(
+      "SELECT price, seats_available FROM special_trips WHERE id = ?",
+      [tripId]
+    );
+
+    if (tripRows.length === 0) {
+      return res.status(404).json({ message: "Trip not found" });
+    }
+
+    const trip = tripRows[0];
+
+    // ❌ إذا المقاعد خلصت
+    if (trip.seats_available <= 0) {
+      return res.status(400).json({ message: "Trip is full" });
+    }
+
+    // 💰 wallet
+    const [userRows] = await db.query(
+      "SELECT wallet_balance FROM users WHERE id = ?",
+      [userId]
+    );
+
+    const balance = userRows[0].wallet_balance;
+
+    if (balance < trip.price) {
+      return res.status(400).json({ message: "Not enough balance" });
+    }
+
+    // 💸 خصم الرصيد
+    await db.query(
+      "UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ?",
+      [trip.price, userId]
+    );
+
+    // 🎟️ تسجيل الحجز
+    await db.query(
+      "INSERT INTO special_trip_bookings (user_id, trip_id) VALUES (?, ?)",
+      [userId, tripId]
+    );
+
+    // 🪑 نقص المقاعد
+    await db.query(
+      "UPDATE special_trips SET seats_available = seats_available - 1 WHERE id = ?",
+      [tripId]
+    );
+
+    res.json({ message: "Booking confirmed" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+
+
 
 /* =========================
    CITIES (MYSQL)
