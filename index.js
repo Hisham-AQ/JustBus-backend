@@ -472,7 +472,52 @@ app.post("/api/special-trips/book", authenticateToken, async (req, res) => {
   }
 });
 
+/* =========================
+   CARDS
+========================= */
 
+app.post("/api/cards", authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+  const { cardNumber, holder, expiry, brand } = req.body;
+
+  try {
+    const last4 = cardNumber.slice(-4);
+
+    await db.query(
+      "INSERT INTO user_cards (user_id, card_number, card_holder, expiry, brand) VALUES (?, ?, ?, ?, ?)",
+      [userId, last4, holder, expiry, brand]
+    );
+
+    res.json({ message: "Card added" });
+
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+app.get("/api/cards", authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+
+  const [rows] = await db.query(
+    "SELECT * FROM user_cards WHERE user_id = ?",
+    [userId]
+  );
+
+  res.json(rows);
+});
+
+
+app.get("/api/cards", authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+
+  const [rows] = await db.query(
+    "SELECT * FROM user_cards WHERE user_id = ?",
+    [userId]
+  );
+
+  res.json(rows);
+});
 
 
 
