@@ -311,7 +311,7 @@ app.post("/auth/forgot-password", async (req, res) => {
   "https://api.brevo.com/v3/smtp/email",
   {
     sender: {
-      email: "your_verified_email@gmail.com",
+      email: "smashni02@gmail.com",
       name: "JustBus Support",
     },
     to: [{ email }],
