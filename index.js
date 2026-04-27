@@ -384,7 +384,7 @@ app.post("/auth/reset-password", async (req, res) => {
 ========================= */
 app.get("/api/special-trips", async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM SpecialTrips");
+    const [rows] = await db.query("SELECT * FROM SpecialTrip");
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch trips" });
@@ -396,7 +396,7 @@ app.get("/api/special-trips/:id", async (req, res) => {
 
   try {
     const [rows] = await db.query(
-      "SELECT * FROM special_trips WHERE id = ?",
+      "SELECT * FROM SpecialTrip WHERE id = ?",
       [id]
     );
 
@@ -419,7 +419,7 @@ app.post("/api/special-trips/book", authenticateToken, async (req, res) => {
   try {
     // 🧾 trip
     const [tripRows] = await db.query(
-      "SELECT price, seats_available FROM special_trips WHERE id = ?",
+      "SELECT price, seats_available FROM SpecialTrip WHERE id = ?",
       [tripId]
     );
 
@@ -460,7 +460,7 @@ app.post("/api/special-trips/book", authenticateToken, async (req, res) => {
 
     // 🪑 نقص المقاعد
     await db.query(
-      "UPDATE special_trips SET seats_available = seats_available - 1 WHERE id = ?",
+      "UPDATE SpecialTrip SET seats_available = seats_available - 1 WHERE id = ?",
       [tripId]
     );
 
