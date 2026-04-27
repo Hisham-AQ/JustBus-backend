@@ -1,6 +1,7 @@
 /* =========================================
    IMPORTS & CONFIGURATION
 ========================================= */
+const axios = require("axios");
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -18,11 +19,7 @@ app.use(express.json());
 
 
 
-const brevo = require('@getbrevo/brevo');
 
-const emailApi = new brevo.TransactionalEmailsApi({
-  apiKey: process.env.BREVO_API_KEY,
-});
 
 
 /* =========================================
@@ -310,19 +307,28 @@ app.post("/auth/forgot-password", async (req, res) => {
       [resetCode, expires, userId]
     );
 
-    await emailApi.sendTransacEmail({
-  sender: {
-    email: "your@email.com",
-    name: "JustBus Support",
+    await axios.post(
+  "https://api.brevo.com/v3/smtp/email",
+  {
+    sender: {
+      email: "your_verified_email@gmail.com",
+      name: "JustBus Support",
+    },
+    to: [{ email }],
+    subject: "JustBus Password Reset Code",
+    htmlContent: `
+      <p>You requested a password reset.</p>
+      <h2>${resetCode}</h2>
+      <p>This code expires in 15 minutes.</p>
+    `,
   },
-  to: [{ email }],
-  subject: "JustBus Password Reset Code",
-  htmlContent: `
-    <p>You requested a password reset.</p>
-    <h2>${resetCode}</h2>
-    <p>This code expires in 15 minutes.</p>
-  `,
-});
+  {
+    headers: {
+      "api-key": process.env.BREVO_API_KEY,
+      "Content-Type": "application/json",
+    },
+  }
+);
 
     res.json({ message: "A reset code has been sent" });
   } catch (err) {
