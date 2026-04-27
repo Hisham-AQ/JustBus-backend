@@ -15,13 +15,19 @@ const db = require("./config/db");
 const app = express();
 app.use(express.json());
 
+
+
+
 const brevo = require('@getbrevo/brevo');
 
-const client = brevo.ApiClient.instance;
-const apiKey = client.authentications['api-key'];
-apiKey.apiKey = process.env.BREVO_API_KEY;
-
 const emailApi = new brevo.TransactionalEmailsApi();
+
+// Set API key
+emailApi.setApiKey(
+  brevo.TransactionalEmailsApiApiKeys.apiKey,
+  process.env.BREVO_API_KEY
+);
+
 
 /* =========================================
    JWT AUTH MIDDLEWARE
