@@ -20,13 +20,9 @@ app.use(express.json());
 
 const brevo = require('@getbrevo/brevo');
 
-const emailApi = new brevo.TransactionalEmailsApi();
-
-// Set API key
-emailApi.setApiKey(
-  brevo.TransactionalEmailsApiApiKeys.apiKey,
-  process.env.BREVO_API_KEY
-);
+const emailApi = new brevo.TransactionalEmailsApi({
+  apiKey: process.env.BREVO_API_KEY,
+});
 
 
 /* =========================================
