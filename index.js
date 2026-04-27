@@ -384,7 +384,7 @@ app.post("/auth/reset-password", async (req, res) => {
 ========================= */
 app.get("/api/special-trips", async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM special_trips");
+    const [rows] = await db.query("SELECT * FROM SpecialTrips");
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch trips" });
