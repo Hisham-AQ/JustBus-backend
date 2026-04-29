@@ -6,13 +6,25 @@ const authenticateToken = require("./middleware/authMiddleware");
 const axios = require("axios");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const adminRoutes = require("./routes/admin.routes");
+const busesRoutes = require("./routes/buses.routes");
+const routesRoutes = require("./routes/routes.routes");
+const driversRoutes = require("./routes/drivers.routes");
 
+app.use("/drivers", driversRoutes);
+app.use("/routes", routesRoutes);
+app.use("/buses", busesRoutes);
+app.use("/admin", adminRoutes);
 app.use("/auth", require("./routes/auth.routes"));
 app.use("/api", require("./routes/user.routes"));
 app.use("/api", require("./routes/trips.routes"));
 app.use("/api", require("./routes/bookings.routes"));
 app.use("/api", require("./routes/parcels.routes"));
 app.use("/api", require("./routes/specialTrips.routes"));
+
+
+
+
 
 const db = require("./config/db");
 

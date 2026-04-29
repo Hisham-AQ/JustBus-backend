@@ -6,7 +6,7 @@ const axios = require("axios");
 /* =========================================
    CHANGE PASSWORD
 ========================================= */
-exports.changePassword = async (req, res) => {
+const changePassword = async (req, res) => {
   try {
     const userId = req.user.id;
     const { currentPassword, newPassword } = req.body;
@@ -55,7 +55,7 @@ exports.changePassword = async (req, res) => {
 /* =========================================
    FORGOT PASSWORD
 ========================================= */
-exports.forgotPassword = async (req, res) => {
+const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -121,7 +121,7 @@ exports.forgotPassword = async (req, res) => {
 /* =========================================
    RESET PASSWORD
 ========================================= */
-exports.resetPassword = async (req, res) => {
+const resetPassword = async (req, res) => {
   try {
     const { code, newPassword } = req.body;
 
@@ -174,7 +174,7 @@ exports.resetPassword = async (req, res) => {
 /* =========================================
    REGISTER
 ========================================= */
-exports.register = async (req, res) => {
+const register = async (req, res) => {
   try {
     const { name, email, password, role, phone, gender, birth_date } = req.body;
 
@@ -224,7 +224,7 @@ exports.register = async (req, res) => {
 /* =========================================
    LOGIN
 ========================================= */
-exports.login = async (req, res) => {
+const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -269,4 +269,65 @@ exports.login = async (req, res) => {
     console.error("LOGIN ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
+};
+
+/* =========================================
+   ADMIN LOGIN
+========================================= */const adminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Email and password are required",
+      });
+    }
+
+    const [rows] = await db.execute(
+      "SELECT id, email, password, role FROM users WHERE email = ?",
+      [email]
+    );
+
+    if (rows.length === 0) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const user = rows[0];
+
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    if (user.role !== 'admin') {
+      return res.status(403).json({ message: "Admins only" });
+    }
+
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+
+    res.json({
+      token,
+      role: user.role,
+    });
+
+  } catch (err) {
+    console.error("ADMIN LOGIN ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+module.exports = {
+  register,
+  login,
+  adminLogin,
+  changePassword,
+  forgotPassword,
+  resetPassword,
 };
