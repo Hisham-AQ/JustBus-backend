@@ -9,3 +9,8 @@ const pool = mysql.createPool({
 });
 
 module.exports = pool;
+
+console.log({
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT
+});
