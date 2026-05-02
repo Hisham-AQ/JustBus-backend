@@ -17,28 +17,19 @@ exports.createParcel = async (req, res) => {
 
   const connection = await db.getConnection();
 
-
-  if (!receiver_name || receiver_name.trim() === "") {
-    await connection.rollback();
-    return res.status(400).json({ message: "Receiver name required" });
-  }
-
-  if (users.length === 0) {
-    await connection.rollback();
-    return res.status(404).json({ message: "User not found" });
-  }
-
-  if (pickup_location === dropoff_location) {
-    await connection.rollback();
-    return res.status(400).json({ message: "Invalid route" });
-  }
-
-  if (weight <= 0) {
-    await connection.rollback();
-    return res.status(400).json({ message: "Invalid weight" });
-  }
-
   try {
+    if (!receiver_name || receiver_name.trim() === "") {
+      return res.status(400).json({ message: "Receiver name required" });
+    }
+
+    if (pickup_location === dropoff_location) {
+      return res.status(400).json({ message: "Invalid route" });
+    }
+
+    if (weight <= 0) {
+      return res.status(400).json({ message: "Invalid weight" });
+    }
+
     await connection.beginTransaction();
 
     const [users] = await connection.execute(
@@ -46,6 +37,10 @@ exports.createParcel = async (req, res) => {
       [userId]
     );
 
+    if (users.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ message: "User not found" });
+    }
 
     const balance = parseFloat(users[0].balance);
 
@@ -112,22 +107,3 @@ exports.createParcel = async (req, res) => {
     connection.release();
   }
 };
-
-function calculatePrice({ pickup_location, dropoff_location, weight, parcel_type, delivery_type }) {
-  let base = 1.25;
-
-  let dist = pickup_location === dropoff_location ? 0 : 1.25;
-
-  let weightFee = 0.35 * weight;
-
-  let typeFee = {
-    'Documents': 0,
-    'Small Box': 0.35,
-    'Medium Box': 0.75,
-    'Large Box': 1.10
-  }[parcel_type] || 0.4;
-
-  let express = delivery_type === "express" ? 1.25 : 0;
-
-  return parseFloat((base + dist + weightFee + typeFee + express).toFixed(2));
-}
