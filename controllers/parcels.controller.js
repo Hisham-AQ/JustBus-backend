@@ -37,11 +37,6 @@ exports.createParcel = async (req, res) => {
       [userId]
     );
 
-    if (users.length === 0) {
-      await connection.rollback();
-      return res.status(404).json({ message: "User not found" });
-    }
-
     const balance = parseFloat(users[0].balance);
 
     const calculatedPrice = calculatePrice({
