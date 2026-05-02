@@ -34,7 +34,7 @@ exports.createParcel = async (req, res) => {
     await connection.beginTransaction();
 
     const [users] = await connection.execute(
-      "SELECT balance FROM users WHERE id = ? FOR UPDATE",
+      "SELECT wallet_balance FROM users WHERE id = ? FOR UPDATE",
       [userId]
     );
 
@@ -61,7 +61,7 @@ exports.createParcel = async (req, res) => {
     }
 
     await connection.execute(
-      "UPDATE users SET balance = balance - ? WHERE id = ?",
+      "UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ?",
       [calculatedPrice, userId]
     );
 
