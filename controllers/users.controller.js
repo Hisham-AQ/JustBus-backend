@@ -26,6 +26,20 @@ exports.getProfile = async (req, res) => {
   }
 };
 
+exports.getUsers = async (req, res) => {
+  try {
+    const [users] = await db.query(
+      "SELECT id, email, role FROM users"
+    );
+
+    res.json(users);
+
+  } catch (err) {
+    console.error("GET USERS ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;

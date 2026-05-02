@@ -1,5 +1,7 @@
 const db = require("../config/db");
+const { io } = require("../index");
 
+// ================= CREATE PARCEL =================
 exports.createParcel = async (req, res) => {
   const userId = req.user.id;
 
@@ -46,7 +48,75 @@ exports.createParcel = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("PARCEL ERROR:", err);
+    console.error("CREATE PARCEL ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+// ================= GET PARCELS =================
+exports.getParcels = async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        id,
+        order_number,
+        pickup_location,
+        dropoff_location,
+        parcel_type,
+        weight,
+        delivery_type,
+        price,
+        status,
+        created_at
+      FROM parcel_requests
+      ORDER BY created_at DESC
+    `);
+
+    res.json(rows);
+
+  } catch (err) {
+    console.error("GET PARCELS ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+// ================= UPDATE PARCEL STATUS =================
+exports.updateParcelStatus = async (req, res) => {
+  
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    // optional: restrict allowed statuses
+    const allowed = ["pending", "in_transit", "delivered", "cancelled"];
+    if (!allowed.includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const [result] = await db.execute(
+      "UPDATE parcel_requests SET status = ? WHERE id = ?",
+      [status, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Parcel not found" });
+    }
+
+    io.emit("parcel:updated", {
+      id,
+      status
+    });
+
+    res.json({ message: "Status updated" });
+
+  } catch (err) {
+    console.error("UPDATE PARCEL STATUS ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

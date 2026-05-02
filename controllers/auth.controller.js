@@ -273,7 +273,8 @@ const login = async (req, res) => {
 
 /* =========================================
    ADMIN LOGIN
-========================================= */const adminLogin = async (req, res) => {
+========================================= */
+const adminLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
 

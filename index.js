@@ -1,6 +1,18 @@
 const express = require("express");
 require("dotenv").config();
 const app = express();
+
+const cors = require("cors");
+
+app.use(cors({
+  origin: ["http://127.0.0.1:5174", "http://localhost:5174"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
+
+
+
 app.use(express.json());
 const authenticateToken = require("./middleware/authMiddleware");
 const axios = require("axios");
@@ -10,23 +22,35 @@ const adminRoutes = require("./routes/admin.routes");
 const busesRoutes = require("./routes/buses.routes");
 const routesRoutes = require("./routes/routes.routes");
 const driversRoutes = require("./routes/drivers.routes");
+const adminTripsRoutes = require("./routes/adminTrips.routes");
+const studentsRoutes = require("./routes/students.routes");
+const dashboardRoutes = require("./routes/dashboard.routes");
+const ratingsRoutes = require("./routes/ratings.routes");
 
-app.use("/drivers", driversRoutes);
-app.use("/routes", routesRoutes);
-app.use("/buses", busesRoutes);
-app.use("/admin", adminRoutes);
+
 app.use("/api/auth", require("./routes/auth.routes"));
+app.use("/api/trips", adminTripsRoutes);
+app.use("/api/drivers", driversRoutes);
+app.use("/api/routes", routesRoutes);
+app.use("/api/buses", require("./routes/buses.routes"));
+app.use("/api/admin", adminRoutes);
 app.use("/api", require("./routes/trips.routes"));
 app.use("/api", require("./routes/bookings.routes"));
 app.use("/api", require("./routes/parcels.routes"));
 app.use("/api", require("./routes/specialTrips.routes"));
-app.use("/api", require("./routes/user.routes"));
-
-
-
+app.use("/api", require("./routes/users.routes"));
+app.use("/api/students", studentsRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/ratings", ratingsRoutes);
+app.use("/api/alerts", require("./routes/alerts.routes"));
+app.use("/api/rewards", require("./routes/rewards.routes"));
 
 
 const db = require("./config/db");
+
+
+
+
 
 
 
@@ -167,8 +191,30 @@ app.post('/driver/scan', authenticateToken, async (req, res) => {
 /* =========================================
    START SERVER
 ========================================= */
+
+const http = require("http");
+const { Server } = require("socket.io");
+
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+  }
+});
+
+module.exports.io = io;
+
+io.on("connection", (socket) => {
+  console.log("🟢 Client connected:", socket.id);
+
+  socket.on("disconnect", () => {
+    console.log("🔴 Client disconnected:", socket.id);
+  });
+});
+
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
