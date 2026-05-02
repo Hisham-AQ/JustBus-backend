@@ -43,7 +43,7 @@ exports.createParcel = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const balance = parseFloat(users[0].balance);
+    const balance = parseFloat(users[0].wallet_balance);
 
     const calculatedPrice = calculatePrice({
       pickup_location,
@@ -59,10 +59,10 @@ exports.createParcel = async (req, res) => {
         message: "Insufficient balance"
       });
     }
-
-    await connection.execute(
-      "UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ?",
-      [calculatedPrice, userId]
+    
+    const [updateResult] = await connection.execute(
+      "UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ? AND wallet_balance >= ?",
+      [calculatedPrice, userId, calculatedPrice]
     );
 
     const pinCode = crypto.randomInt(100000, 999999).toString();
