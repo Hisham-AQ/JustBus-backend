@@ -38,11 +38,12 @@ exports.getMyActivity = async (req, res) => {
         //  Special Trips
         const [specialTrips] = await db.query(`
   SELECT 
-    t.title AS from_city,
-    t.pickup_points AS to_city,
+    s.title,
+    t.pickup_location AS pickup_points,
     stb.created_at,
     stb.status
   FROM special_trip_bookings stb
+  JOIN SpecialTrip s ON s.id = stb.trip_id
   JOIN trips t ON t.id = stb.trip_id
   WHERE stb.user_id = ?
   ORDER BY stb.created_at DESC
