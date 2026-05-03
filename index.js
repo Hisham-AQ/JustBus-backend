@@ -43,7 +43,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/ratings", ratingsRoutes);
 app.use("/api/alerts", require("./routes/alerts.routes"));
 app.use("/api/rewards", require("./routes/rewards.routes"));
-
+app.use("/api", require("./routes/ai.routes"));
 
 const db = require("./config/db");
 
