@@ -29,8 +29,7 @@ const ratingsRoutes = require("./routes/ratings.routes");
 
 
 app.use("/api/auth", require("./routes/auth.routes"));
-app.use("/api/trips", adminTripsRoutes);
-app.use("/api/drivers", driversRoutes);
+app.use("/api/admin/trips", adminTripsRoutes); 
 app.use("/api/routes", routesRoutes);
 app.use("/api/buses", require("./routes/buses.routes"));
 app.use("/api/admin", adminRoutes);
