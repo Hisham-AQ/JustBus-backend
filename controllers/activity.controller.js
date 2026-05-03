@@ -4,17 +4,15 @@ exports.getMyActivity = async (req, res) => {
   const userId = req.user.id;
 
   try {
-    // 🚍 Trips (العادية)
+    // Trips
     const [trips] = await db.query(
       `
       SELECT 
         t.from_city,
         t.to_city,
         t.trip_date,
-        b.pickup_location,
-        b.dropoff_location,
-        b.status,
-        b.total_price
+        b.persons,
+        b.status
       FROM bookings b
       JOIN trips t ON t.id = b.trip_id
       WHERE b.user_id = ?
@@ -23,18 +21,14 @@ exports.getMyActivity = async (req, res) => {
       [userId]
     );
 
-    // 📦 Parcels
+    //  Parcels
     const [parcels] = await db.query(
       `
       SELECT 
         pickup_location,
         dropoff_location,
-        parcel_type,
         weight,
-        delivery_type,
-        price,
-        status,
-        created_at
+        status
       FROM parcel_requests
       WHERE user_id = ?
       ORDER BY created_at DESC
@@ -42,15 +36,14 @@ exports.getMyActivity = async (req, res) => {
       [userId]
     );
 
-    // 🚐 Special Trips
+    //  Special Trips
     const [specialTrips] = await db.query(
       `
       SELECT 
         t.from_city,
         t.to_city,
-        stb.status,
-        stb.qr_token,
-        stb.created_at
+        stb.created_at,
+        stb.status
       FROM special_trip_bookings stb
       JOIN trips t ON t.id = stb.trip_id
       WHERE stb.user_id = ?
