@@ -16,7 +16,7 @@ module.exports = function authenticateToken(req, res, next) {
     // Attach user info to request
     req.user = decoded;
 
-    next(); // ✅ user is authenticated
+    next();
   } catch (err) {
     return res.status(401).json({ message: "Invalid or expired token" });
   }
