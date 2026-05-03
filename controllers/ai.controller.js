@@ -49,6 +49,8 @@ User: ${message}
 
   } catch (err) {
     console.error(err.response?.data || err.message);
-    res.status(500).json({ message: "AI error" });
+    res.status(500).json({
+      message: err.response?.data || err.message
+    });
   }
 };
