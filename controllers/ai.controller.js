@@ -28,19 +28,20 @@ User: ${message}
 `;
 
     const response = await axios.post(
-      "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
+      "https://api-inference.huggingface.co/models/google/flan-t5-large",
       {
         inputs: prompt,
       },
       {
         headers: {
           Authorization: `Bearer ${process.env.HF_TOKEN}`,
+          "Content-Type": "application/json",
         },
       }
     );
 
-    const reply =
-      response.data?.[0]?.generated_text || "مش فاهم عليك 😅";
+    const raw = response.data?.[0]?.generated_text || "";
+    const reply = raw.replace(prompt, "").trim() || "مش فاهم عليك 😅";
 
     res.json({
       reply,
