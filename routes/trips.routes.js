@@ -6,8 +6,8 @@ const authenticateToken = require("../middleware/authMiddleware");
 
 router.get("/cities", tripsController.getCities);
 router.get("/trips", tripsController.searchTrips);
+router.get("/my", authenticateToken, tripsController.getMyTrips);
 router.get("/trips/:tripId/seats", tripsController.getSeats);
 
-router.get("/my", authenticateToken, tripsController.getMyTrips);
 
 module.exports = router;
