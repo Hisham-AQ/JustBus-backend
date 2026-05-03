@@ -70,3 +70,30 @@ exports.getSeats = async (req, res) => {
     }))
   });
 };
+
+exports.getMyTrips = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const [rows] = await db.query(
+      `
+      SELECT 
+        t.from_city,
+        t.to_city,
+        t.trip_date,
+        b.persons,
+        b.status
+      FROM bookings b
+      JOIN trips t ON t.id = b.trip_id
+      WHERE b.user_id = ?
+      ORDER BY t.trip_date DESC
+      `,
+      [userId]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

@@ -36,7 +36,10 @@ User: ${message}
     const reply =
       response.data?.[0]?.generated_text || "مش فاهم عليك 😅";
 
-    res.json({ reply });
+    res.json({
+      reply,
+      trips: trips || [], 
+    });
 
   } catch (err) {
     console.error(err.response?.data || err.message);
