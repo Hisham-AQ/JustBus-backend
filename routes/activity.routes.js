@@ -4,6 +4,6 @@ const router = express.Router();
 const activityController = require("../controllers/activity.controller");
 const authenticateToken = require("../middleware/authMiddleware");
 
-router.get("/", authenticateToken, activityController.getMyActivity);
+router.get("/activity", authenticateToken, controller.getMyActivity);
 
 module.exports = router;
