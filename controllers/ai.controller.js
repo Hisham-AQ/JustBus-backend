@@ -5,27 +5,32 @@ exports.chat = async (req, res) => {
   const { message } = req.body;
 
   try {
-    // 🔥 نجيب الرحلات
+    // 🔥 نجيب الرحلات (context)
     const [trips] = await db.query(`
       SELECT from_city, to_city, departure_time, price
       FROM trips
       LIMIT 10
     `);
 
-    // 🔥 AI request
-    const response = await axios.post(
-      "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
-      {
-        inputs: `
-You are JustBot for a bus app.
+    // 🔥 نبني prompt ذكي
+    const prompt = `
+You are JustBot, a smart assistant for a transport app.
 
-Answer ONLY about trips.
+You can:
+- chat normally
+- answer about trips
+- be friendly
 
-Trips data:
+If user asks about trips → use this data:
 ${JSON.stringify(trips)}
 
 User: ${message}
-        `,
+`;
+
+    const response = await axios.post(
+      "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
+      {
+        inputs: prompt,
       },
       {
         headers: {
@@ -35,7 +40,7 @@ User: ${message}
     );
 
     const reply =
-      response.data?.[0]?.generated_text || "ما قدرت أفهم 😅";
+      response.data?.[0]?.generated_text || "مش فاهم عليك 😅";
 
     res.json({
       reply,
@@ -43,10 +48,7 @@ User: ${message}
     });
 
   } catch (err) {
-    console.error("AI ERROR:", err.response?.data || err.message);
-
-    res.status(500).json({
-      message: "AI error",
-    });
+    console.error(err.response?.data || err.message);
+    res.status(500).json({ message: "AI error" });
   }
 };
