@@ -47,7 +47,7 @@ app.use("/api/alerts", require("./routes/alerts.routes"));
 app.use("/api/rewards", require("./routes/rewards.routes"));
 app.use("/api", require("./routes/ai.routes"));
 app.use("/api/trips", tripsRoutes);
-app.use("/api/activity", activityRoutes);
+app.use("/api", activityRoutes);
 
 
 const db = require("./config/db");
