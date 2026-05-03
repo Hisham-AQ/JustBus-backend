@@ -5,30 +5,23 @@ exports.chat = async (req, res) => {
   const { message } = req.body;
 
   try {
-    // 🔥 نجيب الرحلات (context)
     const [trips] = await db.query(`
       SELECT from_city, to_city, departure_time, price
       FROM trips
-      LIMIT 10
+      LIMIT 5
     `);
 
-    // 🔥 نبني prompt ذكي
     const prompt = `
-You are JustBot, a smart assistant for a transport app.
+You are JustBot. You help with trips and chat normally.
 
-You can:
-- chat normally
-- answer about trips
-- be friendly
-
-If user asks about trips → use this data:
+Trips:
 ${JSON.stringify(trips)}
 
 User: ${message}
 `;
 
     const response = await axios.post(
-      "https://api-inference.huggingface.co/models/google/flan-t5-base",
+      "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill",
       {
         inputs: prompt,
       },
@@ -43,16 +36,10 @@ User: ${message}
     const reply =
       response.data?.[0]?.generated_text || "مش فاهم عليك 😅";
 
-    res.json({
-      reply,
-      trips,
-    });
-
+    res.json({ reply });
 
   } catch (err) {
     console.error(err.response?.data || err.message);
-    res.status(500).json({
-      message: err.response?.data || err.message
-    });
+    res.status(500).json({ message: "AI error" });
   }
 };
