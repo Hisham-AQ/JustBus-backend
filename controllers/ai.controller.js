@@ -30,7 +30,7 @@ User: ${message}
     const response = await axios.post(
       "https://router.huggingface.co/v1/chat/completions",
       {
-        model: "mistralai/Mistral-7B-Instruct-v0.2",
+        model: "HuggingFaceH4/zephyr-7b-beta",
         messages: [
           {
             role: "system",
