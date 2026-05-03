@@ -28,19 +28,9 @@ User: ${message}
 `;
 
     const response = await axios.post(
-      "https://router.huggingface.co/v1/chat/completions",
+      "https://api-inference.huggingface.co/models/google/flan-t5-large",
       {
-        model: "mistralai/Mistral-7B-Instruct-v0.1",
-        messages: [
-          {
-            role: "system",
-            content: "You are JustBot. You help with trips and chat normally."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ]
+        inputs: prompt,
       },
       {
         headers: {
@@ -51,7 +41,12 @@ User: ${message}
     );
 
     const reply =
-      response.data?.choices?.[0]?.message?.content || "مش فاهم عليك 😅";
+      response.data?.[0]?.generated_text || "مش فاهم عليك 😅";
+
+    res.json({
+      reply,
+      trips,
+    });
 
     res.json({
       reply,
