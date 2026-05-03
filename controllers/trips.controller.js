@@ -13,29 +13,32 @@ exports.getCities = async (req, res) => {
 exports.searchTrips = async (req, res) => {
   const { from, to, date } = req.query;
 
+  console.log("FROM:", from);
+  console.log("TO:", to);
+  console.log("DATE:", date);
+
   try {
     const [rows] = await db.query(
       `
-      SELECT 
-        id,
-        from_city,
-        to_city,
-        pickup_location,
-        dropoff_location,
-        departure_time,
-        arrival_time,
-        duration_minutes,
-        price,
-        available_seats
-      FROM trips
-      WHERE from_city = ?
-        AND to_city = ?
-        AND trip_date = ?
-      ORDER BY departure_time
-      `,
+  SELECT 
+    id,
+    from_city,
+    to_city,
+    pickup_location,
+    dropoff_location,
+    departure_time,
+    arrival_time,
+    duration_minutes,
+    price,
+    available_seats
+  FROM trips
+  WHERE TRIM(LOWER(from_city)) = TRIM(LOWER(?))
+    AND TRIM(LOWER(to_city)) = TRIM(LOWER(?))
+    AND DATE(trip_date) = DATE(?)
+  ORDER BY departure_time
+  `,
       [from, to, date]
     );
-
     res.json(rows);
 
   } catch (err) {

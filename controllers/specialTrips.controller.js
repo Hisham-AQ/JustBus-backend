@@ -87,7 +87,8 @@ exports.bookSpecialTrip = async (req, res) => {
     res.json({
       message: "Booking confirmed",
       bookingId: result.insertId,
-      qrToken: qrToken
+      qrToken: qrToken,
+      status: "active"
     });
 
   } catch (err) {
