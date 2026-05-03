@@ -11,6 +11,7 @@ exports.getMyActivity = async (req, res) => {
         t.from_city,
         t.to_city,
         t.trip_date,
+        t.departure_time,
         b.status
       FROM bookings b
       JOIN trips t ON t.id = b.trip_id
