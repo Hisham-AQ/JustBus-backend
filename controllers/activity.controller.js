@@ -27,7 +27,7 @@ exports.getMyActivity = async (req, res) => {
     dropoff_location,
     weight,
     delivery_type,
-    notes AS parcel_type,
+    parcel_type,
     pin_code,
     status
   FROM parcel_requests
@@ -39,12 +39,11 @@ exports.getMyActivity = async (req, res) => {
         const [specialTrips] = await db.query(`
   SELECT 
     s.title,
-    t.pickup_location AS pickup_points,
+    s.pickup_points,
     stb.created_at,
     stb.status
   FROM special_trip_bookings stb
   JOIN SpecialTrip s ON s.id = stb.trip_id
-  JOIN trips t ON t.id = stb.trip_id
   WHERE stb.user_id = ?
   ORDER BY stb.created_at DESC
 `, [userId]);
