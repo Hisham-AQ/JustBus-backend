@@ -94,14 +94,14 @@ exports.payWithWallet = async (req, res) => {
 
         const balance = rows[0]?.wallet_balance || 0;
 
-        if (balance < amount) {
+        if (balance < parsedAmount) {
             await conn.rollback();
             return res.status(400).json({ message: "Insufficient balance" });
         }
 
         await conn.query(
             "UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ?",
-            [amount, userId]
+            [parsedAmount, userId]
         );
 
         await conn.query(
@@ -128,4 +128,21 @@ exports.payWithWallet = async (req, res) => {
     } finally {
         conn.release();
     }
+};
+// ================= GET TRANSACTIONS =================
+exports.getTransactions = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const [rows] = await db.query(
+      "SELECT * FROM wallet_transactions WHERE user_id = ? ORDER BY created_at DESC",
+      [userId]
+    );
+
+    res.json(rows);
+
+  } catch (err) {
+    console.error("GET TRANSACTIONS ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 };
