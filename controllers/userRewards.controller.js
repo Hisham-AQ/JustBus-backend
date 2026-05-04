@@ -68,3 +68,14 @@ exports.redeemReward = async (req, res) => {
         conn.release();
     }
 };
+
+exports.getPoints = async (req, res) => {
+  const userId = req.user.id;
+
+  const [rows] = await db.query(
+    "SELECT points FROM users WHERE id = ?",
+    [userId]
+  );
+
+  res.json({ points: rows[0]?.points || 0 });
+};
