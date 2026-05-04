@@ -12,7 +12,6 @@ app.use(cors({
 }));
 
 
-
 app.use(express.json());
 const authenticateToken = require("./middleware/authMiddleware");
 const axios = require("axios");
@@ -28,6 +27,9 @@ const dashboardRoutes = require("./routes/dashboard.routes");
 const ratingsRoutes = require("./routes/ratings.routes");
 const tripsRoutes = require("./routes/trips.routes");
 const activityRoutes = require("./routes/activity.routes");
+const walletRoutes = require("./routes/wallet.routes");
+const cardRoutes = require("./routes/card.routes");
+
 
 
 app.use("/api/auth", require("./routes/auth.routes"));
@@ -48,11 +50,11 @@ app.use("/api/rewards", require("./routes/rewards.routes"));
 app.use("/api", require("./routes/ai.routes"));
 app.use("/api/trips", tripsRoutes);
 app.use("/api", activityRoutes);
+app.use("/api/wallet", walletRoutes);
+app.use("/api/cards", cardRoutes);
 
 
 const db = require("./config/db");
-
-
 
 
 
@@ -69,62 +71,6 @@ app.get("/", (req, res) => {
 db.query("SELECT 1")
   .then(() => console.log("DB connected ✅"))
   .catch(err => console.error("DB connection failed ❌", err.message));
-
-
-/* =========================
-   wallet
-========================= */
-
-app.get("/api/wallet", authenticateToken, async (req, res) => {
-  const userId = req.user.id;
-
-  const [rows] = await db.query(
-    "SELECT wallet_balance FROM users WHERE id = ?",
-    [userId]
-  );
-
-  res.json({
-    balance: rows[0].wallet_balance
-  });
-});
-
-
-
-/* =========================
-   CARDS
-========================= */
-
-app.post("/api/cards", authenticateToken, async (req, res) => {
-  const userId = req.user.id;
-  const { cardNumber, holder, expiry, brand } = req.body;
-
-  try {
-    const last4 = cardNumber.slice(-4);
-
-    await db.query(
-      "INSERT INTO user_cards (user_id, card_number, card_holder, expiry, brand) VALUES (?, ?, ?, ?, ?)",
-      [userId, last4, holder, expiry, brand]
-    );
-
-    res.json({ message: "Card added" });
-
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-
-app.get("/api/cards", authenticateToken, async (req, res) => {
-  const userId = req.user.id;
-
-  const [rows] = await db.query(
-    "SELECT * FROM user_cards WHERE user_id = ?",
-    [userId]
-  );
-
-  res.json(rows);
-});
-
 
 
 /* =========================
