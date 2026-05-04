@@ -1,3 +1,5 @@
+const db = require("../config/db");
+
 
 exports.redeemReward = async (req, res) => {
     const userId = req.user.id;
