@@ -1,3 +1,6 @@
+const db = require("../config/db");
+
+
 exports.addCard = async (req, res) => {
     const userId = req.user.id;
     const { cardNumber, holder, expiry } = req.body;

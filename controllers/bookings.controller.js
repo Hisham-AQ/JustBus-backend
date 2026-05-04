@@ -16,9 +16,8 @@ exports.holdSeats = async (req, res) => {
   const conn = await db.getConnection();
 
   try {
-    await conn.beginTransaction(); // ✅ مهم
+    await conn.beginTransaction(); 
 
-    // تحقق من المقاعد
     const [taken] = await conn.execute(
       `
       SELECT seat_number
