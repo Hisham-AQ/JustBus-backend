@@ -16,7 +16,7 @@ exports.holdSeats = async (req, res) => {
   const conn = await db.getConnection();
 
   try {
-    await conn.beginTransaction(); 
+    await conn.beginTransaction();
 
     const [taken] = await conn.execute(
       `
@@ -37,8 +37,21 @@ exports.holdSeats = async (req, res) => {
     }
 
     const holdExpiresAt = new Date(Date.now() + 3 * 60 * 1000);
+
     const qrToken = require('crypto').randomUUID();
-    const totalPrice = seats.length * 2.5;
+    const [tripRows] = await conn.query(
+      "SELECT price FROM trips WHERE id = ?",
+      [tripId]
+    );
+
+    if (tripRows.length === 0) {
+      await conn.rollback();
+      return res.status(404).json({ message: "Trip not found" });
+    }
+
+    const pricePerSeat = parseFloat(tripRows[0].price);
+
+    const totalPrice = parseFloat((seats.length * pricePerSeat).toFixed(2));
 
     const [bookingResult] = await conn.execute(
       `
@@ -116,7 +129,7 @@ exports.confirmBooking = async (req, res) => {
     const amount = booking.total_price;
 
     const [balanceRows] = await conn.execute(
-      "SELECT wallet_balance FROM users WHERE id = ?",
+      "SELECT wallet_balance FROM users WHERE id = ? FOR UPDATE",
       [userId]
     );
 
@@ -127,10 +140,15 @@ exports.confirmBooking = async (req, res) => {
       return res.status(400).json({ message: "Insufficient balance" });
     }
 
-    await conn.execute(
-      "UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ?",
-      [amount, userId]
+    const [updateResult] = await conn.execute(
+      "UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ? AND wallet_balance >= ?",
+      [amount, userId, amount]
     );
+
+    if (updateResult.affectedRows === 0) {
+      await conn.rollback();
+      return res.status(400).json({ message: "Insufficient balance" });
+    }
 
     await conn.execute(
       "INSERT INTO wallet_transactions (user_id, type, amount) VALUES (?, ?, ?)",
