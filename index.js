@@ -33,7 +33,7 @@ const cardRoutes = require("./routes/card.routes");
 
 
 app.use("/api/auth", require("./routes/auth.routes"));
-app.use("/api/admin/trips", adminTripsRoutes); 
+app.use("/api/admin/trips", adminTripsRoutes);
 app.use("/api/routes", routesRoutes);
 app.use("/api/buses", require("./routes/buses.routes"));
 app.use("/api/admin", adminRoutes);
@@ -73,9 +73,7 @@ db.query("SELECT 1")
   .catch(err => console.error("DB connection failed ❌", err.message));
 
 
-/* =========================
-   CLEANUP EXPIRED HOLDS (CRON)
-========================= */
+////////////////// holds TIME
 setInterval(async () => {
   try {
     await db.query(`
@@ -83,6 +81,7 @@ setInterval(async () => {
       WHERE status = 'held'
       AND hold_expires_at < NOW()
     `);
+    console.log("Expired holds cleaned");
   } catch (err) {
     console.error("Cleanup job error:", err.message);
   }

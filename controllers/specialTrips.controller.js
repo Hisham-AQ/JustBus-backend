@@ -62,6 +62,11 @@ exports.bookSpecialTrip = async (req, res) => {
       return res.status(400).json({ message: "Not enough balance" });
     }
 
+    await connection.query(
+      "INSERT INTO wallet_transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)",
+      [userId, "payment", trip.price, "Special Trip Booking"]
+    );
+    
     const [seatResult] = await connection.query(
       "UPDATE SpecialTrip SET seats_available = seats_available - 1 WHERE id = ? AND seats_available > 0",
       [tripId]

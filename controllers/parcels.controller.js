@@ -59,11 +59,21 @@ exports.createParcel = async (req, res) => {
         message: "Insufficient balance"
       });
     }
-    
+
     const [updateResult] = await connection.execute(
       "UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ? AND wallet_balance >= ?",
       [calculatedPrice, userId, calculatedPrice]
     );
+
+    await connection.execute(
+      "INSERT INTO wallet_transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)",
+      [userId, "payment", calculatedPrice, "Parcel delivery"]
+    );
+
+    if (updateResult.affectedRows === 0) {
+      await connection.rollback();
+      return res.status(400).json({ message: "Insufficient balance" });
+    }
 
     const pinCode = crypto.randomInt(100000, 999999).toString();
 

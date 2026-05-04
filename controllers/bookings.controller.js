@@ -16,14 +16,9 @@ exports.holdSeats = async (req, res) => {
   const conn = await db.getConnection();
 
   try {
-    await conn.beginTransaction();
+    await conn.beginTransaction(); // ✅ مهم
 
-    await conn.query(`
-      DELETE FROM bookings
-      WHERE status = 'held'
-      AND hold_expires_at < NOW()
-    `);
-
+    // تحقق من المقاعد
     const [taken] = await conn.execute(
       `
       SELECT seat_number
@@ -44,6 +39,7 @@ exports.holdSeats = async (req, res) => {
 
     const holdExpiresAt = new Date(Date.now() + 3 * 60 * 1000);
     const qrToken = require('crypto').randomUUID();
+    const totalPrice = seats.length * 2.5;
 
     const [bookingResult] = await conn.execute(
       `
@@ -56,7 +52,7 @@ exports.holdSeats = async (req, res) => {
         tripId,
         pickup,
         dropoff,
-        seats.length * 2.5,
+        totalPrice,
         qrToken,
         holdExpiresAt,
       ]
@@ -87,7 +83,7 @@ exports.holdSeats = async (req, res) => {
   }
 };
 
-/* CONFIRM BOOKING */
+
 exports.confirmBooking = async (req, res) => {
   const { bookingId } = req.body;
   const userId = req.user.id;
@@ -99,6 +95,8 @@ exports.confirmBooking = async (req, res) => {
   const conn = await db.getConnection();
 
   try {
+    await conn.beginTransaction();
+
     const [rows] = await conn.execute(
       `SELECT * FROM bookings
        WHERE id = ?
@@ -109,10 +107,36 @@ exports.confirmBooking = async (req, res) => {
     );
 
     if (rows.length === 0) {
+      await conn.rollback();
       return res.status(409).json({
         message: 'Hold expired or booking not found',
       });
     }
+
+    const booking = rows[0];
+    const amount = booking.total_price;
+
+    const [balanceRows] = await conn.execute(
+      "SELECT wallet_balance FROM users WHERE id = ?",
+      [userId]
+    );
+
+    const balance = balanceRows[0]?.wallet_balance || 0;
+
+    if (balance < amount) {
+      await conn.rollback();
+      return res.status(400).json({ message: "Insufficient balance" });
+    }
+
+    await conn.execute(
+      "UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ?",
+      [amount, userId]
+    );
+
+    await conn.execute(
+      "INSERT INTO wallet_transactions (user_id, type, amount) VALUES (?, ?, ?)",
+      [userId, "payment", amount]
+    );
 
     await conn.execute(
       `UPDATE bookings
@@ -121,9 +145,15 @@ exports.confirmBooking = async (req, res) => {
       [bookingId]
     );
 
-    res.json({ success: true });
+    await conn.commit();
+
+    res.json({
+      success: true,
+      message: "Booking confirmed & paid"
+    });
 
   } catch (err) {
+    await conn.rollback();
     console.error("CONFIRM ERROR:", err);
     res.status(500).json({ message: "Confirm failed" });
   } finally {
