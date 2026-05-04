@@ -1,14 +1,11 @@
-// TEMP in-memory storage (later move to DB)
-let rules = {
-  pointsPerTrip: 10,
-  bonusThreshold: 100,
-  reward: "Free Ride"
-};
+const db = require("../config/db");
+
 
 // ================= GET RULES =================
 exports.getRules = async (req, res) => {
   try {
-    res.json(rules);
+    const [rows] = await db.query("SELECT * FROM reward_rules WHERE id = 1");
+    res.json(rows[0]);
   } catch (err) {
     console.error("GET RULES ERROR:", err);
     res.status(500).json({ message: "Server error" });
@@ -17,18 +14,20 @@ exports.getRules = async (req, res) => {
 
 // ================= UPDATE RULES =================
 exports.updateRules = async (req, res) => {
+  const { pointsPerTrip, bonusThreshold, reward } = req.body;
+
   try {
-    const { pointsPerTrip, bonusThreshold, reward } = req.body;
+    await db.query(
+      `UPDATE reward_rules 
+       SET 
+         points_per_trip = COALESCE(?, points_per_trip),
+         bonus_threshold = COALESCE(?, bonus_threshold),
+         reward = COALESCE(?, reward)
+       WHERE id = 1`,
+      [pointsPerTrip, bonusThreshold, reward]
+    );
 
-    // update only provided fields
-    if (pointsPerTrip !== undefined) rules.pointsPerTrip = pointsPerTrip;
-    if (bonusThreshold !== undefined) rules.bonusThreshold = bonusThreshold;
-    if (reward !== undefined) rules.reward = reward;
-
-    res.json({
-      message: "Rules updated",
-      rules
-    });
+    res.json({ message: "Rules updated" });
 
   } catch (err) {
     console.error("UPDATE RULES ERROR:", err);

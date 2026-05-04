@@ -21,9 +21,14 @@ exports.holdSeats = async (req, res) => {
     const [taken] = await conn.execute(
       `
       SELECT seat_number
-      FROM booking_seats
-      WHERE trip_id = ?
-      AND seat_number IN (${seats.map(() => '?').join(',')})
+      FROM booking_seats bs
+      JOIN bookings b ON b.id = bs.booking_id
+      WHERE bs.trip_id = ?
+      AND bs.seat_number IN (${seats.map(() => '?').join(',')})
+      AND (
+         b.status = 'confirmed'
+         OR (b.status = 'held' AND b.hold_expires_at > NOW())
+          )
       `,
       [tripId, ...seats]
     );
@@ -88,6 +93,13 @@ exports.holdSeats = async (req, res) => {
 
   } catch (err) {
     await conn.rollback();
+
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({
+        message: "Seat already taken ",
+      });
+    }
+
     console.error("HOLD ERROR:", err);
     res.status(500).json({ message: "Hold failed" });
   } finally {
@@ -97,7 +109,7 @@ exports.holdSeats = async (req, res) => {
 
 
 exports.confirmBooking = async (req, res) => {
-  const { bookingId } = req.body;
+  const { bookingId, rewardCode } = req.body;
   const userId = req.user.id;
 
   if (!bookingId) {
@@ -114,7 +126,8 @@ exports.confirmBooking = async (req, res) => {
        WHERE id = ?
          AND user_id = ?
          AND status = 'held'
-         AND hold_expires_at > UTC_TIMESTAMP()`,
+         AND hold_expires_at > UTC_TIMESTAMP()
+         FOR UPDATE`,
       [bookingId, userId]
     );
 
@@ -127,6 +140,31 @@ exports.confirmBooking = async (req, res) => {
 
     const booking = rows[0];
     const amount = booking.total_price;
+    let useReward = false;
+
+    if (rewardCode) {
+      const [rewardRows] = await conn.execute(
+        "SELECT * FROM user_rewards WHERE code = ? AND user_id = ? AND is_used = 0",
+        [rewardCode, userId]
+      );
+
+      if (rewardRows.length === 0) {
+        await conn.rollback();
+        return res.status(400).json({ message: "Invalid reward code" });
+      }
+
+      if (rewardRows[0].type !== "free_trip") {
+        await conn.rollback();
+        return res.status(400).json({ message: "Invalid reward type" });
+      }
+
+      useReward = true;
+
+      await conn.execute(
+        "UPDATE user_rewards SET is_used = 1 WHERE id = ?",
+        [rewardRows[0].id]
+      );
+    }
 
     const [balanceRows] = await conn.execute(
       "SELECT wallet_balance FROM users WHERE id = ? FOR UPDATE",
@@ -135,30 +173,42 @@ exports.confirmBooking = async (req, res) => {
 
     const balance = balanceRows[0]?.wallet_balance || 0;
 
-    if (balance < amount) {
-      await conn.rollback();
-      return res.status(400).json({ message: "Insufficient balance" });
-    }
+    if (!useReward) {
+      if (balance < amount) {
+        await conn.rollback();
+        return res.status(400).json({ message: "Insufficient balance" });
+      }
 
-    const [updateResult] = await conn.execute(
-      "UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ? AND wallet_balance >= ?",
-      [amount, userId, amount]
-    );
+      const [updateResult] = await conn.execute(
+        "UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ? AND wallet_balance >= ?",
+        [amount, userId, amount]
+      );
 
-    if (updateResult.affectedRows === 0) {
-      await conn.rollback();
-      return res.status(400).json({ message: "Insufficient balance" });
+      if (updateResult.affectedRows === 0) {
+        await conn.rollback();
+        return res.status(400).json({ message: "Insufficient balance" });
+      }
+
+      await conn.execute(
+        "INSERT INTO wallet_transactions (user_id, type, amount) VALUES (?, ?, ?)",
+        [userId, "payment", amount]
+      );
     }
 
     await conn.execute(
-      "INSERT INTO wallet_transactions (user_id, type, amount) VALUES (?, ?, ?)",
-      [userId, "payment", amount]
+      "UPDATE users SET points = points + ? WHERE id = ?",
+      [10, userId]
+    );
+
+    await conn.execute(
+      "INSERT INTO points_transactions (user_id, type, points) VALUES (?, ?, ?)",
+      [userId, "trip", 10]
     );
 
     await conn.execute(
       `UPDATE bookings
-       SET status = 'confirmed'
-       WHERE id = ?`,
+   SET status = 'confirmed'
+   WHERE id = ?`,
       [bookingId]
     );
 
@@ -168,6 +218,7 @@ exports.confirmBooking = async (req, res) => {
       success: true,
       message: "Booking confirmed & paid"
     });
+
 
   } catch (err) {
     await conn.rollback();

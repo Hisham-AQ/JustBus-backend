@@ -42,8 +42,8 @@ exports.topUp = async (req, res) => {
         );
 
         await conn.query(
-            "INSERT INTO wallet_transactions (user_id, type, amount) VALUES (?, ?, ?)",
-            [userId, "topup", amount]
+            "INSERT INTO wallet_transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)",
+            [userId, "topup", amount, "Topup"]
         );
 
         await conn.commit();
@@ -131,18 +131,18 @@ exports.payWithWallet = async (req, res) => {
 };
 // ================= GET TRANSACTIONS =================
 exports.getTransactions = async (req, res) => {
-  const userId = req.user.id;
+    const userId = req.user.id;
 
-  try {
-    const [rows] = await db.query(
-      "SELECT * FROM wallet_transactions WHERE user_id = ? ORDER BY created_at DESC",
-      [userId]
-    );
+    try {
+        const [rows] = await db.query(
+            "SELECT * FROM wallet_transactions WHERE user_id = ? ORDER BY created_at DESC",
+            [userId]
+        );
 
-    res.json(rows);
+        res.json(rows);
 
-  } catch (err) {
-    console.error("GET TRANSACTIONS ERROR:", err);
-    res.status(500).json({ message: "Server error" });
-  }
+    } catch (err) {
+        console.error("GET TRANSACTIONS ERROR:", err);
+        res.status(500).json({ message: "Server error" });
+    }
 };

@@ -27,7 +27,7 @@ exports.createParcel = async (req, res) => {
       return res.status(400).json({ message: "Invalid route" });
     }
 
-    if (weight <= 0) {
+    if (!weight || weight <= 0){
       return res.status(400).json({ message: "Invalid weight" });
     }
 
@@ -65,15 +65,15 @@ exports.createParcel = async (req, res) => {
       [calculatedPrice, userId, calculatedPrice]
     );
 
-    await connection.execute(
-      "INSERT INTO wallet_transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)",
-      [userId, "payment", calculatedPrice, "Parcel delivery"]
-    );
-
     if (updateResult.affectedRows === 0) {
       await connection.rollback();
       return res.status(400).json({ message: "Insufficient balance" });
     }
+
+    await connection.execute(
+      "INSERT INTO wallet_transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)",
+      [userId, "payment", calculatedPrice, "Parcel delivery"]
+    );
 
     const pinCode = crypto.randomInt(100000, 999999).toString();
 
@@ -99,6 +99,16 @@ exports.createParcel = async (req, res) => {
     await connection.execute(
       "UPDATE parcel_requests SET order_number = ? WHERE id = ?",
       [orderNumber, result.insertId]
+    );
+
+    await connection.execute(
+      "UPDATE users SET points = points + ? WHERE id = ?",
+      [15, userId]
+    );
+
+    await connection.execute(
+      "INSERT INTO points_transactions (user_id, type, points) VALUES (?, ?, ?)",
+      [userId, "parcel", 15]
     );
 
     await connection.commit();

@@ -14,7 +14,7 @@ exports.bookSpecialTrip = async (req, res) => {
     await connection.beginTransaction();
 
     const [existing] = await connection.query(
-      "SELECT id FROM special_trip_bookings WHERE user_id = ? AND trip_id = ?",
+      "SELECT id FROM special_trip_bookings WHERE user_id = ? AND trip_id = ? FOR UPDATE",
       [userId, tripId]
     );
 
@@ -66,7 +66,7 @@ exports.bookSpecialTrip = async (req, res) => {
       "INSERT INTO wallet_transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)",
       [userId, "payment", trip.price, "Special Trip Booking"]
     );
-    
+
     const [seatResult] = await connection.query(
       "UPDATE SpecialTrip SET seats_available = seats_available - 1 WHERE id = ? AND seats_available > 0",
       [tripId]
@@ -85,6 +85,16 @@ exports.bookSpecialTrip = async (req, res) => {
     const [result] = await connection.query(
       "INSERT INTO special_trip_bookings (user_id, trip_id, qr_token) VALUES (?, ?, ?)",
       [userId, tripId, qrToken]
+    );
+
+    await connection.execute(
+      "UPDATE users SET points = points + ? WHERE id = ?",
+      [20, userId]
+    );
+
+    await connection.execute(
+      "INSERT INTO points_transactions (user_id, type, points) VALUES (?, ?, ?)",
+      [userId, "special_trip", 20]
     );
 
     await connection.commit();
