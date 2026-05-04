@@ -84,7 +84,7 @@ exports.holdSeats = async (req, res) => {
 
     await conn.commit();
 
-    res.json({ bookingId, holdExpiresAt });
+    res.json({ bookingId, holdExpiresAt, totalPrice });
 
   } catch (err) {
     await conn.rollback();
