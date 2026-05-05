@@ -126,10 +126,6 @@ exports.createParcel = async (req, res) => {
       receiver_name
     ]);
 
-    await db.query(
-      "UPDATE user_rewards SET is_used = 1 WHERE code = ?",
-      [code]
-    );
 
     const orderNumber = "ORD-" + String(result.insertId).padStart(4, '0');
 
