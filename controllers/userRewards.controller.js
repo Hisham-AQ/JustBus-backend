@@ -128,7 +128,7 @@ exports.validateReward = async (req, res) => {
 
         await db.query(
             "UPDATE user_rewards SET is_used = 1 WHERE code = ?",
-            [rewardCode]
+            [code]
         );
 
     } catch (err) {

@@ -7,8 +7,10 @@ const controller = require("../controllers/userRewards.controller");
 // GET points
 router.get("/", authMiddleware, controller.getPoints);
 
-// Redeem reward
+// Redeem reward (generate code)
 router.post("/redeem", authMiddleware, controller.redeemReward);
-router.post("/validate-reward", authMiddleware, validateReward);
+
+// Validate reward
+router.post("/validate-reward", authMiddleware, controller.validateReward);
 
 module.exports = router;
