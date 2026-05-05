@@ -30,6 +30,7 @@ const activityRoutes = require("./routes/activity.routes");
 const walletRoutes = require("./routes/wallet.routes");
 const cardRoutes = require("./routes/card.routes");
 const rewardsRoutes = require("./routes/userRewards.routes");
+const notificationsRoutes = require("./routes/notifications.routes");
 
 
 
@@ -54,7 +55,7 @@ app.use("/api", activityRoutes);
 app.use("/api/wallet", walletRoutes);
 app.use("/api/cards", cardRoutes);
 app.use("/api/rewards", rewardsRoutes);
-
+app.use("/api", notificationsRoutes);
 
 const db = require("./config/db");
 
