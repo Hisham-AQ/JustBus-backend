@@ -72,12 +72,67 @@ exports.redeemReward = async (req, res) => {
 };
 
 exports.getPoints = async (req, res) => {
-  const userId = req.user.id;
+    const userId = req.user.id;
 
-  const [rows] = await db.query(
-    "SELECT points FROM users WHERE id = ?",
-    [userId]
-  );
+    const [rows] = await db.query(
+        "SELECT points FROM users WHERE id = ?",
+        [userId]
+    );
 
-  res.json({ points: rows[0]?.points || 0 });
+    res.json({ points: rows[0]?.points || 0 });
+};
+
+exports.validateReward = async (req, res) => {
+    const userId = req.user.id;
+    const { code } = req.body;
+
+    try {
+        const [rows] = await db.query(
+            "SELECT * FROM user_rewards WHERE code = ? AND user_id = ? AND is_used = 0",
+            [code, userId]
+        );
+
+        if (rows.length === 0) {
+            return res.status(400).json({
+                valid: false,
+                message: "Invalid or already used code",
+            });
+        }
+
+        const reward = rows[0];
+
+        let finalPrice = null;
+
+        switch (reward.type) {
+            case "free_package":
+                finalPrice = 0;
+                break;
+
+            case "discount":
+                finalPrice = 2; 
+                break;
+
+            case "free_trip":
+                finalPrice = 0; 
+                break;
+
+            default:
+                finalPrice = null;
+        }
+
+        res.json({
+            valid: true,
+            type: reward.type,
+            finalPrice: finalPrice,
+        });
+
+        await db.query(
+            "UPDATE user_rewards SET is_used = 1 WHERE code = ?",
+            [rewardCode]
+        );
+
+    } catch (err) {
+        console.error("VALIDATE ERROR:", err);
+        res.status(500).json({ message: "Server error" });
+    }
 };

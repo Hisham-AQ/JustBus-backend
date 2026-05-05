@@ -9,5 +9,6 @@ router.get("/", authMiddleware, controller.getPoints);
 
 // Redeem reward
 router.post("/redeem", authMiddleware, controller.redeemReward);
+router.post("/validate-reward", authMiddleware, validateReward);
 
 module.exports = router;
