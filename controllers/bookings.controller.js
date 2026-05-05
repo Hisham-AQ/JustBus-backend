@@ -124,10 +124,10 @@ exports.confirmBooking = async (req, res) => {
     const [rows] = await conn.execute(
       `SELECT * FROM bookings
        WHERE id = ?
-         AND user_id = ?
-         AND status = 'held'
-         AND hold_expires_at > UTC_TIMESTAMP()
-         FOR UPDATE`,
+       AND user_id = ?
+       AND status = 'held'
+       AND hold_expires_at > UTC_TIMESTAMP()
+       FOR UPDATE`,
       [bookingId, userId]
     );
 
@@ -140,40 +140,45 @@ exports.confirmBooking = async (req, res) => {
 
     const booking = rows[0];
     const amount = booking.total_price;
-    let useReward = false;
+
+    let isFree = false;
+    let rewardId = null;
 
     if (rewardCode) {
       const [rewardRows] = await conn.execute(
-        "SELECT * FROM user_rewards WHERE code = ? AND user_id = ? AND is_used = 0",
+        `SELECT * FROM user_rewards
+         WHERE code = ?
+         AND user_id = ?
+         AND is_used = 0
+         FOR UPDATE`,
         [rewardCode, userId]
       );
 
       if (rewardRows.length === 0) {
         await conn.rollback();
-        return res.status(400).json({ message: "Invalid reward code" });
+        return res.status(400).json({ message: "Invalid or used reward code" });
       }
 
-      if (rewardRows[0].type !== "free_trip") {
-        await conn.rollback();
-        return res.status(400).json({ message: "Invalid reward type" });
+      const reward = rewardRows[0];
+      rewardId = reward.id;
+
+      if (reward.type === "free_trip") {
+        isFree = true;
       }
-
-      useReward = true;
-
-      await conn.execute(
-        "UPDATE user_rewards SET is_used = 1 WHERE id = ?",
-        [rewardRows[0].id]
-      );
     }
 
-    const [balanceRows] = await conn.execute(
-      "SELECT wallet_balance FROM users WHERE id = ? FOR UPDATE",
-      [userId]
-    );
+    let balance = 0;
 
-    const balance = balanceRows[0]?.wallet_balance || 0;
+    if (!isFree) {
+      const [balanceRows] = await conn.execute(
+        "SELECT wallet_balance FROM users WHERE id = ? FOR UPDATE",
+        [userId]
+      );
 
-    if (!useReward) {
+      balance = balanceRows[0]?.wallet_balance || 0;
+    }
+
+    if (!isFree) {
       if (balance < amount) {
         await conn.rollback();
         return res.status(400).json({ message: "Insufficient balance" });
@@ -195,6 +200,13 @@ exports.confirmBooking = async (req, res) => {
       );
     }
 
+    if (rewardId) {
+      await conn.execute(
+        "UPDATE user_rewards SET is_used = 1 WHERE id = ?",
+        [rewardId]
+      );
+    }
+
     await conn.execute(
       "UPDATE users SET points = points + ? WHERE id = ?",
       [10, userId]
@@ -206,9 +218,7 @@ exports.confirmBooking = async (req, res) => {
     );
 
     await conn.execute(
-      `UPDATE bookings
-   SET status = 'confirmed'
-   WHERE id = ?`,
+      "UPDATE bookings SET status = 'confirmed' WHERE id = ?",
       [bookingId]
     );
 
@@ -216,9 +226,11 @@ exports.confirmBooking = async (req, res) => {
 
     res.json({
       success: true,
-      message: "Booking confirmed & paid"
+      isFree,
+      message: isFree
+        ? "Booking confirmed (FREE 🎉)"
+        : "Booking confirmed & paid"
     });
-
 
   } catch (err) {
     await conn.rollback();

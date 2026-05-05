@@ -13,7 +13,8 @@ exports.createParcel = async (req, res) => {
     weight,
     delivery_type,
     notes,
-    receiver_name
+    receiver_name,
+    rewardCode
   } = req.body;
 
   const connection = await db.getConnection();
@@ -27,7 +28,7 @@ exports.createParcel = async (req, res) => {
       return res.status(400).json({ message: "Invalid route" });
     }
 
-    if (!weight || weight <= 0){
+    if (!weight || weight <= 0) {
       return res.status(400).json({ message: "Invalid weight" });
     }
 
@@ -53,27 +54,58 @@ exports.createParcel = async (req, res) => {
       delivery_type
     });
 
-    if (balance < calculatedPrice) {
+    let finalPrice = calculatedPrice;
+    let rewardId = null;
+    if (rewardCode) {
+      const [rewardRows] = await connection.execute(
+        `SELECT * FROM user_rewards
+     WHERE code = ?
+     AND user_id = ?
+     AND is_used = 0
+     FOR UPDATE`,
+        [rewardCode, userId]
+      );
+
+      if (rewardRows.length === 0) {
+        await connection.rollback();
+        return res.status(400).json({ message: "Invalid or used reward code" });
+      }
+
+      const reward = rewardRows[0];
+      rewardId = reward.id;
+
+      if (reward.type === "free_parcel") {
+        finalPrice = 0;
+      } else if (reward.type === "discount_10") {
+        finalPrice = parseFloat((calculatedPrice * 0.9).toFixed(2));
+      } else {
+        await connection.rollback();
+        return res.status(400).json({ message: "Unsupported reward type" });
+      }
+    }
+    if (balance < finalPrice) {
       await connection.rollback();
       return res.status(400).json({
         message: "Insufficient balance"
       });
     }
 
-    const [updateResult] = await connection.execute(
-      "UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ? AND wallet_balance >= ?",
-      [calculatedPrice, userId, calculatedPrice]
-    );
+    if (finalPrice > 0) {
+      const [updateResult] = await connection.execute(
+        "UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ? AND wallet_balance >= ?",
+        [finalPrice, userId, finalPrice]
+      );
 
-    if (updateResult.affectedRows === 0) {
-      await connection.rollback();
-      return res.status(400).json({ message: "Insufficient balance" });
+      if (updateResult.affectedRows === 0) {
+        await connection.rollback();
+        return res.status(400).json({ message: "Insufficient balance" });
+      }
+
+      await connection.execute(
+        "INSERT INTO wallet_transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)",
+        [userId, "payment", finalPrice, "Parcel delivery"]
+      );
     }
-
-    await connection.execute(
-      "INSERT INTO wallet_transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)",
-      [userId, "payment", calculatedPrice, "Parcel delivery"]
-    );
 
     const pinCode = crypto.randomInt(100000, 999999).toString();
 
@@ -89,7 +121,7 @@ exports.createParcel = async (req, res) => {
       weight,
       delivery_type,
       notes,
-      calculatedPrice,
+      finalPrice,
       pinCode,
       receiver_name
     ]);
@@ -111,6 +143,13 @@ exports.createParcel = async (req, res) => {
       [userId, "parcel", 15]
     );
 
+
+    if (rewardId) {
+      await connection.execute(
+        "UPDATE user_rewards SET is_used = 1 WHERE id = ?",
+        [rewardId]
+      );
+    }
     await connection.commit();
 
     res.json({
@@ -127,6 +166,8 @@ exports.createParcel = async (req, res) => {
     connection.release();
   }
 };
+
+
 
 // ================= GET PARCELS =================
 exports.getParcels = async (req, res) => {
