@@ -83,7 +83,7 @@ setInterval(async () => {
       WHERE status = 'held'
       AND hold_expires_at < NOW()
     `);
-    console.log("Expired holds cleaned");
+   //console.log("Expired holds cleaned");
   } catch (err) {
     console.error("Cleanup job error:", err.message);
   }

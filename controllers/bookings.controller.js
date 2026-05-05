@@ -162,12 +162,17 @@ exports.confirmBooking = async (req, res) => {
       const reward = rewardRows[0];
       rewardId = reward.id;
 
-      if (reward.type === "free_trip") {
-        isFree = true;
+      if (reward.type !== "free_trip") {
+        await conn.rollback();
+        return res.status(400).json({
+          message: "Only free trip rewards allowed",
+        });
       }
+
+      isFree = true;
     }
 
-    let balance = 0;
+    let balance ;
 
     if (!isFree) {
       const [balanceRows] = await conn.execute(

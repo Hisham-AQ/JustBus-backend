@@ -126,10 +126,7 @@ exports.validateReward = async (req, res) => {
             finalPrice: finalPrice,
         });
 
-        await db.query(
-            "UPDATE user_rewards SET is_used = 1 WHERE code = ?",
-            [code]
-        );
+
 
     } catch (err) {
         console.error("VALIDATE ERROR:", err);
