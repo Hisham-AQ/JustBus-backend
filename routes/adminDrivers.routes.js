@@ -3,7 +3,7 @@ const router = express.Router();
 
 const authenticateToken = require("../middleware/authMiddleware");
 const allowRoles = require("../middleware/roleMiddleware");
-const driversController = require("../controllers/drivers.controller");
+const driversController = require("../controllers/adminDrivers.controller");
 
 // GET
 router.get("/", authenticateToken, allowRoles("admin"), driversController.getDrivers);
@@ -16,5 +16,3 @@ router.put("/:id", authenticateToken, allowRoles("admin"), driversController.upd
 
 // DELETE
 router.delete("/:id", authenticateToken, allowRoles("admin"), driversController.deleteDriver);
-
-module.exports = router;

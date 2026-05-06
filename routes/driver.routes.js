@@ -1,17 +1,18 @@
 const express = require("express");
+
 const router = express.Router();
 
-const authMiddleware = require("../middleware/authMiddleware");
-const controller = require("../controllers/driver.controller");
+const authMiddleware =
+    require("../middleware/authMiddleware");
+
+const controller =
+    require("../controllers/driver.controller");
 
 router.get(
     "/current-trip",
     authMiddleware,
     controller.getCurrentTrip
 );
-
-module.exports = router;
-
 
 router.patch(
     "/start-trip",
@@ -44,7 +45,9 @@ router.patch(
 );
 
 router.post(
-  "/report-misconduct",
-  authMiddleware,
-  controller.reportMisconduct
+    "/report-misconduct",
+    authMiddleware,
+    controller.reportMisconduct
 );
+
+module.exports = router;
