@@ -72,6 +72,7 @@ exports.getPassengers = async (req, res) => {
                 bs.seat_number,
                 bs.is_boarded,
                 bs.is_dropped_off
+                t.status
 
             FROM booking_seats bs
 
@@ -107,14 +108,27 @@ exports.getPassengers = async (req, res) => {
 
 
 exports.startTrip = async (req, res) => {
-    const driverId = req.user.id;
+    const userId = req.user.id;
+
+    const [drivers] = await db.query(
+        `SELECT id FROM drivers WHERE user_id = ?`,
+        [userId]
+    );
+
+    if (drivers.length === 0) {
+        return res.status(404).json({
+            message: "Driver not found"
+        });
+    }
+
+    const driverId = drivers[0].id;
     const { tripId } = req.body;
 
     try {
         await db.query(
             `UPDATE trips
              SET status = 'ongoing'
-             WHERE id = ? AND driver_id = ?`,
+              WHERE id = ? AND driver_id = ?`,
             [tripId, driverId]
         );
 
@@ -132,7 +146,20 @@ exports.startTrip = async (req, res) => {
 
 
 exports.endTrip = async (req, res) => {
-    const driverId = req.user.id;
+    const userId = req.user.id;
+
+    const [drivers] = await db.query(
+        `SELECT id FROM drivers WHERE user_id = ?`,
+        [userId]
+    );
+
+    if (drivers.length === 0) {
+        return res.status(404).json({
+            message: "Driver not found"
+        });
+    }
+
+    const driverId = drivers[0].id;
     const { tripId } = req.body;
 
     try {
@@ -201,13 +228,28 @@ exports.scanTicket = async (req, res) => {
        WHERE booking_id = ?`,
             [booking.booking_id]
         );
+
+        const [drivers] = await db.query(
+            `SELECT id
+            FROM drivers
+           WHERE user_id = ?`,
+            [req.user.id]
+        );
+
+        if (drivers.length === 0) {
+            return res.status(404).json({
+                message: "Driver not found"
+            });
+        }
+
+        const driverId = drivers[0].id;
         await db.query(
             `INSERT INTO scan_logs
               (booking_id, driver_id, result)
               VALUES (?, ?, ?)`,
             [
                 booking.booking_id,
-                req.user.id,
+                driverId,
                 'success'
             ]
         );
@@ -233,10 +275,22 @@ exports.dropOffPassenger = async (req, res) => {
     try {
 
         await db.query(
-            `UPDATE booking_seats
-       SET is_dropped_off = 1
-       WHERE id = ?`,
-            [seatId]
+            `UPDATE booking_seats bs
+
+             JOIN bookings b
+             ON bs.booking_id = b.id
+
+             JOIN trips t
+             ON b.trip_id = t.id
+ 
+            JOIN drivers d
+            ON t.driver_id = d.id
+
+             SET bs.is_dropped_off = 1
+
+          WHERE bs.id = ?
+            AND d.user_id = ?`,
+            [seatId, req.user.id]
         );
 
         res.json({
@@ -254,7 +308,7 @@ exports.dropOffPassenger = async (req, res) => {
 
 exports.reportMisconduct = async (req, res) => {
 
-    const driverId = req.user.id;
+    const userId = req.user.id;
 
     const {
         booking_id,
@@ -265,6 +319,27 @@ exports.reportMisconduct = async (req, res) => {
 
     try {
 
+        // get actual driver id
+        const [drivers] = await db.query(
+            `SELECT id
+             FROM drivers
+             WHERE user_id = ?`,
+            [userId]
+        );
+
+        if (drivers.length === 0) {
+            return res.status(404).json({
+                message: "Driver not found"
+            });
+        }
+
+        const driverId = drivers[0].id;
+        
+        if (!category || !severity || !description) {
+            return res.status(400).json({
+                message: "Missing required fields"
+            });
+        }
         await db.query(
             `INSERT INTO misconduct_reports
             (
