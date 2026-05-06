@@ -13,15 +13,15 @@ exports.getCurrentTrip = async (req, res) => {
         st.status,
         st.available_seats,
         st.price,
-        r.from_city,
-        r.to_city,
+        r.pickup_location,
+        r.dropoff_location,
         b.bus_number,
         d.name AS driver_name
       FROM trips st
       JOIN routes r ON st.route_id = r.id
       LEFT JOIN buses b ON st.bus_id = b.id
       LEFT JOIN drivers d ON st.driver_id = d.id
-      WHERE st.driver_id = ?
+      WHERE d.user_id = ?
       ORDER BY st.trip_date DESC
       LIMIT 1
     `, [driverId]);
