@@ -71,7 +71,7 @@ exports.getPassengers = async (req, res) => {
                 u.name,
                 bs.seat_number,
                 bs.is_boarded,
-                bs.is_dropped_off
+                bs.is_dropped_off,
                 t.status
 
             FROM booking_seats bs
@@ -334,7 +334,7 @@ exports.reportMisconduct = async (req, res) => {
         }
 
         const driverId = drivers[0].id;
-        
+
         if (!category || !severity || !description) {
             return res.status(400).json({
                 message: "Missing required fields"
