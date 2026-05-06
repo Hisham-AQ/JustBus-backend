@@ -32,6 +32,7 @@ const cardRoutes = require("./routes/card.routes");
 const rewardsRoutes = require("./routes/userRewards.routes");
 const notificationsRoutes = require("./routes/notifications.routes");
 const lostItemsRoutes = require("./routes/lostItems.routes");
+const driverRoutes = require("./routes/driver.routes");
 
 
 
@@ -58,6 +59,8 @@ app.use("/api/cards", cardRoutes);
 app.use("/api/rewards", rewardsRoutes);
 app.use("/api", notificationsRoutes);
 app.use("/api", lostItemsRoutes);
+app.use("/api/driver", driverRoutes);
+
 
 
 const db = require("./config/db");
@@ -93,54 +96,6 @@ setInterval(async () => {
   }
 }, 60 * 1000);
 
-
-/* =========================
-   DRIVER — QR SCAN
-========================= */
-app.post('/driver/scan', authenticateToken, async (req, res) => {
-  const { qrToken } = req.body;
-
-  if (!qrToken) {
-    return res.status(400).json({ message: 'Missing qrToken' });
-  }
-
-  const [rows] = await db.query(
-    `
-    SELECT b.id, b.status, t.trip_date
-    FROM bookings b
-    JOIN trips t ON t.id = b.trip_id
-    WHERE b.qr_token = ?
-    `,
-    [qrToken]
-  );
-
-  if (rows.length === 0) {
-    return res.status(404).json({ valid: false, message: 'Invalid ticket' });
-  }
-
-  const booking = rows[0];
-
-  if (booking.status !== 'confirmed') {
-    return res.json({ valid: false, message: 'Ticket already used or cancelled' });
-  }
-
-  await db.query(
-    `UPDATE bookings SET status = 'used' WHERE id = ?`,
-    [booking.id]
-  );
-
-  await db.query(
-    `INSERT INTO scan_logs (booking_id, scanned_at)
-     VALUES (?, NOW())`,
-    [booking.id]
-  );
-
-  res.json({
-    valid: true,
-    bookingId: booking.id,
-    message: 'Ticket valid'
-  });
-});
 
 /* =========================================
    START SERVER
