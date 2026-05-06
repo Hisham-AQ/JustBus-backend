@@ -1,41 +1,45 @@
 const db = require("../config/db");
 
-exports.getCurrentTrip = async (req, res) => {
-    const driverId = req.user.id;
+exports.getPassengers = async (req, res) => {
+
+    const userId = req.user.id;
 
     try {
-        const [rows] = await db.query(`
-      SELECT 
-        st.id,
-        st.trip_date,
-        st.departure_time,
-        st.arrival_time,
-        st.status,
-        st.available_seats,
-        st.price,
-        r.pickup_location,
-        r.dropoff_location,
-        b.bus_number,
-        d.name AS driver_name
-      FROM trips st
-      JOIN routes r ON st.route_id = r.id
-      LEFT JOIN buses b ON st.bus_id = b.id
-      LEFT JOIN drivers d ON st.driver_id = d.id
-      WHERE d.user_id = ?
-      ORDER BY st.trip_date DESC
-      LIMIT 1
-    `, [driverId]);
 
-        if (rows.length === 0) {
-            return res.status(404).json({
-                message: "No assigned trip"
-            });
-        }
+        const [rows] = await db.query(
+            `SELECT
+                bs.id,
+                u.name,
+                bs.seat_number,
+                bs.is_boarded,
+                bs.is_dropped_off
 
-        res.json(rows[0]);
+            FROM booking_seats bs
+
+            JOIN bookings b
+            ON bs.booking_id = b.id
+
+            JOIN users u
+            ON b.user_id = u.id
+
+            JOIN trips t
+            ON b.trip_id = t.id
+
+            JOIN drivers d
+            ON t.driver_id = d.id
+
+            WHERE d.user_id = ?
+
+            ORDER BY bs.seat_number ASC`,
+            [userId]
+        );
+
+        res.json(rows);
 
     } catch (err) {
+
         console.error(err);
+
         res.status(500).json({
             message: "Server error"
         });
