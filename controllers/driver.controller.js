@@ -1,5 +1,64 @@
 const db = require("../config/db");
 
+exports.getCurrentTrip = async (req, res) => {
+
+    const userId = req.user.id;
+
+    try {
+
+        const [rows] = await db.query(
+            `SELECT
+                t.id,
+                t.from_city,
+                t.to_city,
+                t.pickup_location,
+                t.dropoff_location,
+                t.trip_date,
+                t.departure_time,
+                t.arrival_time,
+                t.status,
+                t.available_seats,
+                t.price,
+
+                b.bus_number,
+
+                d.name AS driver_name
+
+            FROM trips t
+
+            LEFT JOIN buses b
+            ON t.bus_id = b.id
+
+            LEFT JOIN drivers d
+            ON t.driver_id = d.id
+
+            WHERE d.user_id = ?
+
+            ORDER BY t.trip_date DESC
+
+            LIMIT 1`,
+            [userId]
+        );
+
+        if (rows.length === 0) {
+
+            return res.status(404).json({
+                message: "No assigned trip"
+            });
+        }
+
+        res.json(rows[0]);
+
+    } catch (err) {
+
+        console.error(err);
+
+        res.status(500).json({
+            message: "Server error"
+        });
+    }
+};
+
 exports.getPassengers = async (req, res) => {
 
     const userId = req.user.id;
@@ -166,44 +225,7 @@ exports.scanTicket = async (req, res) => {
     }
 };
 
-exports.getPassengers = async (req, res) => {
-    const driverId = req.user.id;
 
-    try {
-
-        const [rows] = await db.query(
-            `SELECT
-        bs.id,
-        u.full_name,
-        bs.seat_number,
-        bs.is_boarded,
-        bs.is_dropped_off
-       FROM booking_seats bs
-
-       JOIN bookings b
-       ON bs.booking_id = b.id
-
-       JOIN users u
-       ON b.user_id = u.id
-
-       JOIN trips t
-       ON bs.trip_id = t.id
-
-       WHERE t.driver_id = ?
-       ORDER BY bs.seat_number ASC`,
-            [driverId]
-        );
-
-        res.json(rows);
-
-    } catch (err) {
-        console.error(err);
-
-        res.status(500).json({
-            message: "Server error"
-        });
-    }
-};
 
 exports.dropOffPassenger = async (req, res) => {
     const { seatId } = req.body;
