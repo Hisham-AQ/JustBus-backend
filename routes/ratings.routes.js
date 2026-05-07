@@ -6,7 +6,7 @@ const ratingsController =
     require("../controllers/ratings.controller");
 
 const authMiddleware =
-    require("../middleware/auth.middleware");
+    require("../middleware/authMiddleware");
 
 router.post(
     "/",
