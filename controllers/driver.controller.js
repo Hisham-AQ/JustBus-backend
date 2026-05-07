@@ -311,7 +311,8 @@ exports.reportMisconduct = async (req, res) => {
     const userId = req.user.id;
 
     const {
-        booking_id,
+        seat_number,
+        passenger_name,
         category,
         severity,
         description
@@ -335,24 +336,57 @@ exports.reportMisconduct = async (req, res) => {
 
         const driverId = drivers[0].id;
 
-        if (!category || !severity || !description) {
+        const [bookings] = await db.query(
+            `
+    SELECT b.id AS booking_id
+
+    FROM booking_seats bs
+
+    JOIN bookings b
+    ON bs.booking_id = b.id
+
+    JOIN trips t
+    ON b.trip_id = t.id
+
+    WHERE
+        t.driver_id = ?
+        AND bs.seat_number = ?
+
+    LIMIT 1
+    `,
+            [driverId, seat_number]
+        );
+
+        const bookingId =
+            bookings.length > 0
+                ? bookings[0].booking_id
+                : null;
+
+
+        if (!seat_number || !category || !severity || !description) {
             return res.status(400).json({
                 message: "Missing required fields"
             });
+
         }
         await db.query(
             `INSERT INTO misconduct_reports
-            (
-              driver_id,
-              booking_id,
-              category,
-              severity,
-              description
-            )
-            VALUES (?, ?, ?, ?, ?)`,
+    (
+
+    driverId,
+    bookingId,
+    seat_number,
+    passenger_name || null,
+    category,
+    severity,
+    description
+
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [
                 driverId,
-                booking_id || null,
+                seat_number,
+                passenger_name || null,
                 category,
                 severity,
                 description

@@ -226,7 +226,7 @@ const register = async (req, res) => {
 ========================================= */
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -235,8 +235,8 @@ const login = async (req, res) => {
     }
 
     const [rows] = await db.execute(
-      "SELECT id, email, password, role FROM users WHERE email = ?",
-      [email]
+      "SELECT id, email, password, role FROM users WHERE email = ? AND role = ?",
+      [email, role]
     );
 
     if (rows.length === 0) {
