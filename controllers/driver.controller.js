@@ -183,8 +183,9 @@ exports.endTrip = async (req, res) => {
 };
 
 exports.scanTicket = async (req, res) => {
-    console.log("QR RECEIVED:", qrToken);
     const { qrToken } = req.body;
+
+    console.log("QR RECEIVED:", qrToken);
 
     try {
 
@@ -256,7 +257,7 @@ exports.scanTicket = async (req, res) => {
             [
                 booking.booking_id,
                 driverId,
-                'success'
+                'valid'
             ]
         );
         res.json({
