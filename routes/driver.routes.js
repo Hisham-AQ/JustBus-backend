@@ -50,4 +50,9 @@ router.post(
     controller.reportMisconduct
 );
 
+router.patch(
+    "/update-location",
+    authMiddleware,
+    controller.updateLocation
+);
 module.exports = router;

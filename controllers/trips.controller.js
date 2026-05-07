@@ -97,3 +97,36 @@ exports.getMyTrips = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+exports.getLiveLocation = async (req, res) => {
+
+    const { tripId } = req.params;
+
+    try {
+
+        const [rows] = await db.query(
+            `SELECT
+                current_lat,
+                current_lng
+             FROM trips
+             WHERE id = ?`,
+            [tripId]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({
+                message: "Trip not found"
+            });
+        }
+
+        res.json(rows[0]);
+
+    } catch (err) {
+
+        console.error(err);
+
+        res.status(500).json({
+            message: "Server error"
+        });
+    }
+};

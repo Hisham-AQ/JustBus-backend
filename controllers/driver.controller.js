@@ -413,3 +413,31 @@ exports.reportMisconduct = async (req, res) => {
         });
     }
 };
+
+exports.updateLocation = async (req, res) => {
+
+    const { tripId, lat, lng } = req.body;
+
+    try {
+
+        await db.query(
+            `UPDATE trips
+             SET current_lat = ?,
+                 current_lng = ?
+             WHERE id = ?`,
+            [lat, lng, tripId]
+        );
+
+        res.json({
+            success: true
+        });
+
+    } catch (err) {
+
+        console.error(err);
+
+        res.status(500).json({
+            message: "Server error"
+        });
+    }
+};
