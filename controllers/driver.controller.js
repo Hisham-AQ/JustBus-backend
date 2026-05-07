@@ -164,10 +164,15 @@ exports.endTrip = async (req, res) => {
 
     try {
         await db.query(
-            `UPDATE trips
-             SET status = 'completed'
-             WHERE id = ? AND driver_id = ?`,
-            [tripId, driverId]
+            `
+  UPDATE trips
+  SET
+    status = 'completed',
+    current_lat = NULL,
+    current_lng = NULL
+  WHERE id = ?
+  `,
+            [tripId]
         );
 
         res.json({
