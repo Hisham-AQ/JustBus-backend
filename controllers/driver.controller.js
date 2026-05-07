@@ -188,16 +188,21 @@ exports.scanTicket = async (req, res) => {
 
     try {
 
+        const bookingId = parseInt(qrToken);
+
         const [rows] = await db.query(
             `SELECT 
-            b.id AS booking_id,
-            b.status,
-            bs.is_boarded
-            FROM bookings b
-            JOIN booking_seats bs
-            ON b.id = bs.booking_id
-            WHERE b.id = ?`,
-            [qrToken]
+        b.id AS booking_id,
+        b.status,
+        bs.is_boarded
+
+     FROM bookings b
+
+     JOIN booking_seats bs
+     ON b.id = bs.booking_id
+
+     WHERE b.id = ?`,
+            [bookingId]
         );
 
         if (rows.length === 0) {
