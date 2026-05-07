@@ -183,6 +183,7 @@ exports.endTrip = async (req, res) => {
 };
 
 exports.scanTicket = async (req, res) => {
+    console.log("QR RECEIVED:", qrToken);
     const { qrToken } = req.body;
 
     try {
@@ -372,19 +373,18 @@ exports.reportMisconduct = async (req, res) => {
         await db.query(
             `INSERT INTO misconduct_reports
     (
-
-    driverId,
-    bookingId,
-    seat_number,
-    passenger_name || null,
-    category,
-    severity,
-    description
-
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?)`,
+         driver_id,
+         booking_id,
+          seat_number,
+           passenger_name,
+          category,
+          severity,
+            description
+           )
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [
                 driverId,
+                bookingId,
                 seat_number,
                 passenger_name || null,
                 category,
