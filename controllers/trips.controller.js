@@ -108,49 +108,48 @@ exports.getLiveLocation = async (req, res) => {
 
     const [rows] = await db.query(
       `SELECT
-                current_lat,
-                current_lng
-                status
-             FROM trips
-             WHERE id = ?`,
+          current_lat,
+          current_lng,
+          status
+       FROM trips
+       WHERE id = ?`,
       [tripId]
     );
 
     if (rows.length === 0) {
+
       return res.status(404).json({
         message: "Trip not found"
       });
-
-      const trip = rows[0];
-
-      const {
-        studentLat,
-        studentLng
-      } = req.query;
-
-      const meters =
-        geolib.getDistance(
-
-          {
-            latitude: trip.current_lat,
-            longitude: trip.current_lng,
-          },
-
-          {
-            latitude: Number(studentLat),
-            longitude: Number(studentLng),
-          }
-        );
-
-      const distanceKm = meters / 1000;
-
-      const averageSpeed = 40;
-
-      const etaMinutes =
-        (distanceKm / averageSpeed) * 60;
-
-
     }
+
+    const trip = rows[0];
+
+    const {
+      studentLat,
+      studentLng
+    } = req.query;
+
+    const meters =
+      geolib.getDistance(
+
+        {
+          latitude: trip.current_lat,
+          longitude: trip.current_lng,
+        },
+
+        {
+          latitude: Number(studentLat),
+          longitude: Number(studentLng),
+        }
+      );
+
+    const distanceKm = meters / 1000;
+
+    const averageSpeed = 40;
+
+    const etaMinutes =
+      (distanceKm / averageSpeed) * 60;
 
     res.json({
       ...trip,
