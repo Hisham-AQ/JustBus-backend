@@ -196,7 +196,7 @@ exports.scanTicket = async (req, res) => {
             FROM bookings b
             JOIN booking_seats bs
             ON b.id = bs.booking_id
-            WHERE b.qr_token = ?`,
+            WHERE b.id = ?`,
             [qrToken]
         );
 
