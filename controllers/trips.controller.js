@@ -136,11 +136,21 @@ exports.getLiveLocation = async (req, res) => {
 
     const [rows] = await db.query(
       `SELECT
-          current_lat,
-          current_lng,
-          status
-       FROM trips
-       WHERE id = ?`,
+        SELECT
+    t.current_lat,
+    t.current_lng,
+    t.status,
+    bs.is_boarded,
+    t.dropoff_location
+      FROM trips t
+
+JOIN bookings b
+ON b.trip_id = t.id
+
+JOIN booking_seats bs
+ON bs.booking_id = b.id
+
+WHERE t.id = ?`,
       [tripId]
     );
 
@@ -157,27 +167,39 @@ exports.getLiveLocation = async (req, res) => {
       pickupLocation
     } = req.query;
 
-    const pickupCoords =
-      stationCoordinates[pickupLocation];
-    if (!pickupCoords) {
+    const targetLocation =
+      trip.is_boarded
+        ? trip.dropoff_location
+        : pickupLocation;
+
+    const targetCoords =
+      stationCoordinates[targetLocation];
+    if (!targetCoords) {
 
       return res.status(400).json({
         message: "Invalid pickup location"
       });
     }
-    const meters =
-      geolib.getDistance(
+    if (!trip.current_lat || !trip.current_lng) {
 
-        {
-          latitude: trip.current_lat,
-          longitude: trip.current_lng,
-        },
+      return res.json({
+        ...trip,
+        eta_minutes: null
+      });
+    }
 
-        {
-          latitude: pickupCoords.lat,
-          longitude: pickupCoords.lng,
-        }
-      );
+    const meters = geolib.getDistance(
+
+      {
+        latitude: trip.current_lat,
+        longitude: trip.current_lng,
+      },
+
+      {
+        latitude: targetCoords.lat,
+        longitude: targetCoords.lng,
+      }
+    );
 
     const distanceKm = meters / 1000;
 
