@@ -134,25 +134,26 @@ exports.getLiveLocation = async (req, res) => {
 
   try {
 
-    const [rows] = await db.query(
-      `SELECT
-        SELECT
-    t.current_lat,
-    t.current_lng,
-    t.status,
-    bs.is_boarded,
-    t.dropoff_location
-      FROM trips t
+const [rows] = await db.query(
+  `
+  SELECT
+      t.current_lat,
+      t.current_lng,
+      t.status,
+      bs.is_boarded,
+      t.dropoff_location
+  FROM trips t
 
-JOIN bookings b
-ON b.trip_id = t.id
+  JOIN bookings b
+  ON b.trip_id = t.id
 
-JOIN booking_seats bs
-ON bs.booking_id = b.id
+  JOIN booking_seats bs
+  ON bs.booking_id = b.id
 
-WHERE t.id = ?`,
-      [tripId]
-    );
+  WHERE t.id = ?
+  `,
+  [tripId]
+);
 
     if (rows.length === 0) {
 
