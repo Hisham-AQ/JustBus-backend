@@ -1,6 +1,34 @@
 const db = require("../config/db");
 const geolib = require("geolib");
 
+const stationCoordinates = {
+
+  "North Terminal": {
+    lat: 32.5525,
+    lng: 35.8510,
+  },
+
+  "Queen Alia Hospital": {
+    lat: 32.5480,
+    lng: 35.8570,
+  },
+
+  "Yajooz": {
+    lat: 32.5400,
+    lng: 35.8700,
+  },
+
+  "Main Gate": {
+    lat: 32.4970,
+    lng: 35.9910,
+  },
+
+  "Gate 2": {
+    lat: 32.4940,
+    lng: 35.9890,
+  },
+
+};
 
 exports.getCities = async (req, res) => {
   const [rows] = await db.query(`
@@ -126,10 +154,17 @@ exports.getLiveLocation = async (req, res) => {
     const trip = rows[0];
 
     const {
-      studentLat,
-      studentLng
+      pickupLocation
     } = req.query;
 
+    const pickupCoords =
+      stationCoordinates[pickupLocation];
+    if (!pickupCoords) {
+
+      return res.status(400).json({
+        message: "Invalid pickup location"
+      });
+    }
     const meters =
       geolib.getDistance(
 
@@ -139,8 +174,8 @@ exports.getLiveLocation = async (req, res) => {
         },
 
         {
-          latitude: Number(studentLat),
-          longitude: Number(studentLng),
+          latitude: pickupCoords.lat,
+          longitude: pickupCoords.lng,
         }
       );
 
