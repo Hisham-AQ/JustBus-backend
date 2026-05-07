@@ -1,59 +1,53 @@
 const db = require("../config/db");
 
-// ================= ANALYTICS =================
-exports.getAnalytics = async (req, res) => {
-  try {
-    // average rating
-    const [avg] = await db.query(
-      "SELECT AVG(rating) AS averageRating FROM ratings"
-    );
+exports.submitRating = async (req, res) => {
 
-    // total ratings
-    const [total] = await db.query(
-      "SELECT COUNT(*) AS totalRatings FROM ratings"
-    );
+    const userId = req.user.id;
 
-    // distribution (1–5 stars)
-    const [distribution] = await db.query(`
-      SELECT rating, COUNT(*) AS count
-      FROM ratings
-      GROUP BY rating
-      ORDER BY rating
-    `);
+    const {
+        tripId,
+        driverRating,
+        tripRating,
+        serviceRating,
+        comment
+    } = req.body;
 
-    res.json({
-      averageRating: avg[0].averageRating || 0,
-      totalRatings: total[0].totalRatings,
-      distribution
-    });
+    try {
 
-  } catch (err) {
-    console.error("RATINGS ANALYTICS ERROR:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
+        await db.query(
+            `
+            INSERT INTO ratings
+            (
+                user_id,
+                trip_id,
+                driver_rating,
+                trip_rating,
+                service_rating,
+                comment
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            `,
+            [
+                userId,
+                tripId,
+                driverRating,
+                tripRating,
+                serviceRating,
+                comment
+            ]
+        );
 
+        res.json({
+            success: true,
+            message: "Rating submitted"
+        });
 
-// ================= COMMENTS =================
-exports.getComments = async (req, res) => {
-  try {
-    const [rows] = await db.query(`
-      SELECT 
-        r.id,
-        r.rating,
-        r.comment,
-        r.created_at,
-        u.name AS userName
-      FROM ratings r
-      JOIN users u ON u.id = r.user_id
-      WHERE r.comment IS NOT NULL AND r.comment != ''
-      ORDER BY r.created_at DESC
-    `);
+    } catch (err) {
 
-    res.json(rows);
+        console.error(err);
 
-  } catch (err) {
-    console.error("GET COMMENTS ERROR:", err);
-    res.status(500).json({ message: "Server error" });
-  }
+        res.status(500).json({
+            message: "Server error"
+        });
+    }
 };

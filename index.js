@@ -24,7 +24,7 @@ const driversRoutes = require("./routes/adminDrivers.routes");
 const adminTripsRoutes = require("./routes/adminTrips.routes");
 const studentsRoutes = require("./routes/students.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
-const ratingsRoutes = require("./routes/ratings.routes");
+const ratingsRoutes = require("./routes/adminRatings.routes");
 const tripsRoutes = require("./routes/trips.routes");
 const activityRoutes = require("./routes/activity.routes");
 const walletRoutes = require("./routes/wallet.routes");
@@ -33,7 +33,7 @@ const rewardsRoutes = require("./routes/userRewards.routes");
 const notificationsRoutes = require("./routes/notifications.routes");
 const lostItemsRoutes = require("./routes/lostItems.routes");
 const driverRoutes = require("./routes/driver.routes");
-
+const ratingsRoutes = require("./routes/ratings.routes");
 
 
 app.use("/api/auth", require("./routes/auth.routes"));
@@ -60,7 +60,7 @@ app.use("/api/rewards", rewardsRoutes);
 app.use("/api", notificationsRoutes);
 app.use("/api", lostItemsRoutes);
 app.use("/api/driver", driverRoutes);
-
+app.use("/api/ratings", ratingsRoutes);
 
 
 const db = require("./config/db");

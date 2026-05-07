@@ -131,11 +131,11 @@ exports.getMyTrips = async (req, res) => {
 exports.getLiveLocation = async (req, res) => {
 
   const { tripId } = req.params;
-
+  const userId = req.user.id;
   try {
 
-const [rows] = await db.query(
-  `
+    const [rows] = await db.query(
+      `
   SELECT
       t.current_lat,
       t.current_lng,
@@ -151,9 +151,10 @@ const [rows] = await db.query(
   ON bs.booking_id = b.id
 
   WHERE t.id = ?
+AND b.user_id = ?
   `,
-  [tripId]
-);
+      [tripId, userId]
+    );
 
     if (rows.length === 0) {
 

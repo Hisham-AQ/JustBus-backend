@@ -235,7 +235,6 @@ exports.scanTicket = async (req, res) => {
                 message: "Already scanned"
             });
         }
-
         await db.query(
             `UPDATE booking_seats
        SET is_boarded = 1
