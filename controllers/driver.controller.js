@@ -3,6 +3,8 @@ const db = require("../config/db");
 exports.getCurrentTrip = async (req, res) => {
 
     const userId = req.user.id;
+    console.log(req.user);
+    console.log(userId);
 
     try {
 
