@@ -1,4 +1,6 @@
 const db = require("../config/db");
+const geolib = require("geolib");
+
 
 exports.getCities = async (req, res) => {
   const [rows] = await db.query(`
@@ -100,33 +102,67 @@ exports.getMyTrips = async (req, res) => {
 
 exports.getLiveLocation = async (req, res) => {
 
-    const { tripId } = req.params;
+  const { tripId } = req.params;
 
-    try {
+  try {
 
-        const [rows] = await db.query(
-            `SELECT
+    const [rows] = await db.query(
+      `SELECT
                 current_lat,
                 current_lng
+                status
              FROM trips
              WHERE id = ?`,
-            [tripId]
+      [tripId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        message: "Trip not found"
+      });
+
+      const trip = rows[0];
+
+      const {
+        studentLat,
+        studentLng
+      } = req.query;
+
+      const meters =
+        geolib.getDistance(
+
+          {
+            latitude: trip.current_lat,
+            longitude: trip.current_lng,
+          },
+
+          {
+            latitude: Number(studentLat),
+            longitude: Number(studentLng),
+          }
         );
 
-        if (rows.length === 0) {
-            return res.status(404).json({
-                message: "Trip not found"
-            });
-        }
+      const distanceKm = meters / 1000;
 
-        res.json(rows[0]);
+      const averageSpeed = 40;
 
-    } catch (err) {
+      const etaMinutes =
+        (distanceKm / averageSpeed) * 60;
 
-        console.error(err);
 
-        res.status(500).json({
-            message: "Server error"
-        });
     }
+
+    res.json({
+      ...trip,
+      eta_minutes: etaMinutes
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      message: "Server error"
+    });
+  }
 };
