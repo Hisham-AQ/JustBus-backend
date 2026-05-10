@@ -1,48 +1,76 @@
-const axios = require("axios");
 const db = require("../config/db");
 
+const {
+  GoogleGenerativeAI,
+} = require("@google/generative-ai");
+
+const genAI =
+  new GoogleGenerativeAI(
+    process.env.GEMINI_API_KEY
+  );
+
 exports.chat = async (req, res) => {
+
   const { message } = req.body;
 
   try {
+
     const [trips] = await db.query(`
-      SELECT from_city, to_city, departure_time, price
+      SELECT
+        from_city,
+        to_city,
+        departure_time,
+        price,
+        available_seats
       FROM trips
-      LIMIT 5
+      LIMIT 10
     `);
 
-    const prompt = `
-You are JustBot. You help with trips and chat normally.
+    const model =
+      genAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+      });
 
-Trips:
+    const prompt = `
+
+You are JustBot.
+
+You help students with:
+- bus trips
+- booking
+- schedules
+- prices
+- stations
+
+Answer shortly and clearly.
+
+Available trips:
 ${JSON.stringify(trips)}
 
-User: ${message}
+User:
+${message}
+
 `;
 
-    const response = await axios.post(
-      "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill",
-      {
-        inputs: prompt,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.HF_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const result =
+      await model.generateContent(
+        prompt
+      );
 
     const reply =
-      response.data?.[0]?.generated_text || "مش فاهم عليك 😅";
+      result.response.text();
 
     res.json({
       reply,
-      trips: trips || [], 
+      trips,
     });
 
   } catch (err) {
-    console.error(err.response?.data || err.message);
-    res.status(500).json({ message: "AI error" });
+
+    console.error(err);
+
+    res.status(500).json({
+      message: "AI error",
+    });
   }
 };

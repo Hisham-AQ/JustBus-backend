@@ -132,22 +132,33 @@ exports.getLiveLocation = async (req, res) => {
 
     const [rows] = await db.query(
       `
-  SELECT
-      t.current_lat,
-      t.current_lng,
-      t.status,
-      bs.is_boarded,
-      b.dropoff_location
-  FROM trips t
+SELECT
+    t.current_lat,
+    t.current_lng,
+    t.status,
 
-  JOIN bookings b
-  ON b.trip_id = t.id
+    MAX(bs.is_boarded)
+      AS is_boarded,
 
-  JOIN booking_seats bs
-  ON bs.booking_id = b.id
+    t.dropoff_location
 
-  WHERE t.id = ?
+FROM trips t
+
+JOIN bookings b
+ON b.trip_id = t.id
+
+JOIN booking_seats bs
+ON bs.booking_id = b.id
+
+WHERE t.id = ?
 AND b.user_id = ?
+
+GROUP BY
+  t.id,
+  t.current_lat,
+  t.current_lng,
+  t.status,
+  t.dropoff_location
   `,
       [tripId, userId]
     );
@@ -197,9 +208,11 @@ AND b.user_id = ?
     if (!trip.current_lat || !trip.current_lng) {
 
       return res.json({
+
         ...trip,
 
-        eta_minutes: null,
+        eta_minutes:
+          etaMinutes,
 
         eta_type:
           trip.is_boarded
