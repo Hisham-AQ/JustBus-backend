@@ -137,7 +137,7 @@ exports.getLiveLocation = async (req, res) => {
       t.current_lng,
       t.status,
       bs.is_boarded,
-      t.dropoff_location
+      b.dropoff_location
   FROM trips t
 
   JOIN bookings b
@@ -169,7 +169,15 @@ AND b.user_id = ?
       trip.is_boarded
         ? trip.dropoff_location
         : pickupLocation;
+    console.log(
+      "TARGET LOCATION:",
+      targetLocation
+    );
 
+    console.log(
+      "BOARDED:",
+      trip.is_boarded
+    );
     const normalizedLocation =
       String(targetLocation)
         .trim()
@@ -185,12 +193,13 @@ AND b.user_id = ?
         message: "Invalid pickup location"
       });
     }
+
     if (!trip.current_lat || !trip.current_lng) {
 
-      res.json({
+      return res.json({
         ...trip,
 
-        eta_minutes: etaMinutes,
+        eta_minutes: null,
 
         eta_type:
           trip.is_boarded
