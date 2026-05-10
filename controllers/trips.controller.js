@@ -171,8 +171,8 @@ AND b.user_id = ?
         : pickupLocation;
 
     const normalizedLocation =
-      targetLocation
-        ?.trim()
+      String(targetLocation)
+        .trim()
         .toLowerCase();
 
     const targetCoords =
