@@ -1,13 +1,5 @@
+const axios = require("axios");
 const db = require("../config/db");
-
-const {
-  GoogleGenerativeAI,
-} = require("@google/generative-ai");
-
-const genAI =
-  new GoogleGenerativeAI(
-    process.env.GEMINI_API_KEY
-  );
 
 exports.chat = async (req, res) => {
 
@@ -26,11 +18,6 @@ exports.chat = async (req, res) => {
       LIMIT 10
     `);
 
-    const model =
-      genAI.getGenerativeModel({
-       model: "gemini-1.5-flash-latest",
-      });
-
     const prompt = `
 
 You are JustBot.
@@ -39,12 +26,12 @@ You help students with:
 - bus trips
 - booking
 - schedules
-- prices
 - stations
+- prices
 
 Answer shortly and clearly.
 
-Available trips:
+Trips:
 ${JSON.stringify(trips)}
 
 User:
@@ -52,13 +39,32 @@ ${message}
 
 `;
 
-    const result =
-      await model.generateContent(
-        prompt
+    const response =
+      await axios.post(
+
+        `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+
+        {
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+        }
       );
 
     const reply =
-      result.response.text();
+
+      response.data
+        ?.candidates?.[0]
+        ?.content?.parts?.[0]
+        ?.text ||
+
+      "ما قدرت أفهم 😅";
 
     res.json({
       reply,
@@ -67,7 +73,11 @@ ${message}
 
   } catch (err) {
 
-    console.error(err);
+    console.error(
+
+      err.response?.data ||
+      err.message
+    );
 
     res.status(500).json({
       message: "AI error",
