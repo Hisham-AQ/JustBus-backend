@@ -4,28 +4,28 @@ const geolib = require("geolib");
 const stationCoordinates = {
 
   "North Terminal": {
-    lat: 32.5525,
-    lng: 35.8510,
+    lat: 31.995629808817434,
+    lng: 35.91964650163556,
   },
 
   "Queen Alia Hospital": {
-    lat: 32.5480,
-    lng: 35.8570,
+    lat: 32.001525772847884,
+    lng: 35.91889548308669,
   },
 
   "Yajooz": {
-    lat: 32.5400,
-    lng: 35.8700,
+    lat: 32.028837894083615,
+    lng: 35.89279145624723,
   },
 
   "Main Gate": {
-    lat: 32.4970,
-    lng: 35.9910,
+    lat: 32.497808157554395,
+    lng: 35.98654176592043,
   },
 
   "Gate 2": {
-    lat: 32.4940,
-    lng: 35.9890,
+    lat: 32.495002976775716,
+    lng: 35.98582293390612,
   },
 
 };
