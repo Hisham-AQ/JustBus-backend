@@ -43,10 +43,6 @@ exports.getCities = async (req, res) => {
 exports.searchTrips = async (req, res) => {
   const { from, to, date } = req.query;
 
-  console.log("FROM:", from);
-  console.log("TO:", to);
-  console.log("DATE:", date);
-
   try {
     const [rows] = await db.query(
       `
@@ -62,11 +58,11 @@ exports.searchTrips = async (req, res) => {
     price,
     available_seats,
     status
-  FROM trips
-  WHERE TRIM(LOWER(from_city)) = TRIM(LOWER(?))
+    FROM trips
+    WHERE TRIM(LOWER(from_city)) = TRIM(LOWER(?))
     AND TRIM(LOWER(to_city)) = TRIM(LOWER(?))
     AND DATE(trip_date) = DATE(?)
-  ORDER BY departure_time
+    ORDER BY departure_time
   `,
       [from, to, date]
     );

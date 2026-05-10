@@ -104,16 +104,16 @@ exports.validateReward = async (req, res) => {
         let finalPrice = null;
 
         switch (reward.type) {
-            case "free_package":
+            case "free_parcel":
                 finalPrice = 0;
                 break;
 
             case "discount":
-                finalPrice = 2; 
+                finalPrice = 2;
                 break;
 
             case "free_trip":
-                finalPrice = 0; 
+                finalPrice = 0;
                 break;
 
             default:

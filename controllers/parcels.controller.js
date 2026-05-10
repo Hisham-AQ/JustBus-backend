@@ -74,7 +74,7 @@ exports.createParcel = async (req, res) => {
       const reward = rewardRows[0];
       rewardId = reward.id;
 
-      if (reward.type === "free_parcel" || reward.type === "free_package") {
+      if (reward.type === "free_parcel") {
         finalPrice = 0;
       } else if (reward.type === "discount_10") {
         finalPrice = parseFloat((calculatedPrice * 0.9).toFixed(2));
