@@ -60,7 +60,8 @@ exports.searchTrips = async (req, res) => {
     arrival_time,
     duration_minutes,
     price,
-    available_seats
+    available_seats,
+    status
   FROM trips
   WHERE TRIM(LOWER(from_city)) = TRIM(LOWER(?))
     AND TRIM(LOWER(to_city)) = TRIM(LOWER(?))
