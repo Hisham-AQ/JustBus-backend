@@ -3,33 +3,32 @@ const geolib = require("geolib");
 
 const stationCoordinates = {
 
-  "North Terminal": {
+  "north terminal": {
     lat: 31.995629808817434,
     lng: 35.91964650163556,
   },
 
-  "Queen Alia Hospital": {
+  "queen alia hospital": {
     lat: 32.001525772847884,
     lng: 35.91889548308669,
   },
 
-  "Yajooz": {
+  "yajooz": {
     lat: 32.028837894083615,
     lng: 35.89279145624723,
   },
 
-  "Main Gate": {
+  "main gate": {
     lat: 32.497808157554395,
     lng: 35.98654176592043,
   },
 
-  "Gate 2": {
+  "gate 2": {
     lat: 32.495002976775716,
     lng: 35.98582293390612,
   },
 
 };
-
 exports.getCities = async (req, res) => {
   const [rows] = await db.query(`
     SELECT DISTINCT from_city
@@ -171,8 +170,15 @@ AND b.user_id = ?
         ? trip.dropoff_location
         : pickupLocation;
 
+    const normalizedLocation =
+      targetLocation
+        ?.trim()
+        .toLowerCase();
+
     const targetCoords =
-      stationCoordinates[targetLocation];
+      stationCoordinates[
+      normalizedLocation
+      ];
     if (!targetCoords) {
 
       return res.status(400).json({
@@ -181,9 +187,15 @@ AND b.user_id = ?
     }
     if (!trip.current_lat || !trip.current_lng) {
 
-      return res.json({
+      res.json({
         ...trip,
-        eta_minutes: null
+
+        eta_minutes: etaMinutes,
+
+        eta_type:
+          trip.is_boarded
+            ? "dropoff"
+            : "pickup",
       });
     }
 
