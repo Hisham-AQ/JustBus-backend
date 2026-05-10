@@ -11,8 +11,11 @@ exports.getMyActivity = async (req, res) => {
     b.id AS booking_id,
     b.status,
     b.total_price,
-    b.qr_code,
-
+    b.qr_token,
+    b.pickup_location,
+    b.dropoff_location,
+    b.created_at AS booking_date,
+    t.id AS trip_id,
     t.from_city,
     t.to_city,
     t.trip_date,
@@ -20,8 +23,10 @@ exports.getMyActivity = async (req, res) => {
     t.arrival_time,
     t.bus_id,
 
-    GROUP_CONCAT(bs.seat_number) AS seats
-
+    GROUP_CONCAT(
+  bs.seat_number
+  ORDER BY bs.seat_number ASC
+) AS seats
   FROM bookings b
 
   JOIN trips t
