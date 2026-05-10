@@ -15,12 +15,25 @@ exports.getTrips = async (req, res) => {
         duration_minutes AS durationMinutes,
         price,
         available_seats AS availableSeats,
-        trip_date AS tripDate
+        trip_date AS tripDate,
+        status,
+        driver_id AS driverId,
+        bus_id AS busId,
+        current_lat AS currentLat,
+        current_lng AS currentLng
       FROM trips
       ORDER BY trip_date, departure_time
     `);
 
-    res.json(rows);
+    // ✅ Parse JSON fields
+    const parsed = rows.map(trip => ({
+      ...trip,
+      pickupLocation: trip.pickupLocation ? JSON.parse(trip.pickupLocation) : null,
+      dropoffLocation: trip.dropoffLocation ? JSON.parse(trip.dropoffLocation) : null
+    }));
+
+    res.json(parsed);
+
   } catch (err) {
     console.error("GET ADMIN TRIPS ERROR:", err);
     res.status(500).json({ message: "Server error" });
@@ -41,30 +54,42 @@ exports.createTrip = async (req, res) => {
       durationMinutes,
       price,
       availableSeats,
-      tripDate
+      tripDate,
+      status,
+      driverId,
+      busId,
+      currentLat,
+      currentLng
     } = req.body;
 
-    if (!fromCity || !toCity || !departureTime || !tripDate) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
+    // ✅ Proper validation
+    if (!form.departureTime) e.departureTime = 'Departure time required';
+    if (!form.tripDate) e.tripDate = 'Trip date required';
+    if (!form.price) e.price = 'Price required';
 
     await db.query(
       `INSERT INTO trips
       (from_city, to_city, pickup_location, dropoff_location,
        departure_time, arrival_time, duration_minutes,
-       price, available_seats, trip_date)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       price, available_seats, trip_date, status,
+       driver_id, bus_id, current_lat, current_lng)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         fromCity,
         toCity,
-        pickupLocation,
-        dropoffLocation,
+        JSON.stringify(pickupLocation),   // ✅ JSON
+        JSON.stringify(dropoffLocation), // ✅ JSON
         departureTime,
         arrivalTime,
         durationMinutes,
         price,
         availableSeats,
-        tripDate
+        tripDate,
+        status || "scheduled",
+        driverId || null,
+        busId || null,
+        currentLat || null,
+        currentLng || null
       ]
     );
 
@@ -92,7 +117,12 @@ exports.updateTrip = async (req, res) => {
       durationMinutes,
       price,
       availableSeats,
-      tripDate
+      tripDate,
+      status,
+      driverId,
+      busId,
+      currentLat,
+      currentLng
     } = req.body;
 
     await db.query(
@@ -106,19 +136,29 @@ exports.updateTrip = async (req, res) => {
         duration_minutes = ?,
         price = ?,
         available_seats = ?,
-        trip_date = ?
+        trip_date = ?,
+        status = ?,
+        driver_id = ?,
+        bus_id = ?,
+        current_lat = ?,
+        current_lng = ?
       WHERE id = ?`,
       [
         fromCity,
         toCity,
-        pickupLocation,
-        dropoffLocation,
+        JSON.stringify(pickupLocation),
+        JSON.stringify(dropoffLocation),
         departureTime,
         arrivalTime,
         durationMinutes,
         price,
         availableSeats,
         tripDate,
+        status,
+        driverId,
+        busId,
+        currentLat,
+        currentLng,
         id
       ]
     );
