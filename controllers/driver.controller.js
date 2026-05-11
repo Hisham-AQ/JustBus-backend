@@ -256,6 +256,13 @@ exports.scanTicket = async (req, res) => {
             [booking.booking_id]
         );
 
+        await db.query(
+            `UPDATE bookings
+             SET is_boarded = 1
+             WHERE id = ?`,
+            [booking.booking_id]
+        );
+
         const [drivers] = await db.query(
             `SELECT id
             FROM drivers

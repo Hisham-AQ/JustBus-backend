@@ -152,7 +152,7 @@ SELECT
     t.current_lng,
     t.status,
 
-    bs.is_boarded,
+    b.is_boarded,
 
     b.pickup_location,
     b.dropoff_location
@@ -161,9 +161,6 @@ FROM bookings b
 
 JOIN trips t
 ON b.trip_id = t.id
-
-JOIN booking_seats bs
-ON bs.booking_id = b.id
 
 WHERE t.id = ?
 AND b.user_id = ?
