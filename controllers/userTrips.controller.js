@@ -178,7 +178,8 @@ LIMIT 1
     }
 
     const trip = rows[0];
-
+    console.log("USER ID => ", userId);
+    console.log("TRIP DATA => ", trip);
 
     const targetLocation =
       trip.is_boarded
