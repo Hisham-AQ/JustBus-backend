@@ -139,7 +139,7 @@ exports.confirmBooking = async (req, res) => {
     }
 
     const booking = rows[0];
-    const amount = booking.total_price;
+    let amount = booking.total_price;
 
     let isFree = false;
     let rewardId = null;
@@ -170,9 +170,10 @@ exports.confirmBooking = async (req, res) => {
       }
 
       isFree = true;
+      amount = 0;
     }
 
-    let balance ;
+    let balance;
 
     if (!isFree) {
       const [balanceRows] = await conn.execute(
@@ -223,8 +224,11 @@ exports.confirmBooking = async (req, res) => {
     );
 
     await conn.execute(
-      "UPDATE bookings SET status = 'confirmed' WHERE id = ?",
-      [bookingId]
+      `UPDATE bookings
+        SET status = 'confirmed',
+        total_price = ?
+        WHERE id = ?`,
+      [amount, bookingId]
     );
 
     await conn.commit();

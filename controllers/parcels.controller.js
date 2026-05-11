@@ -100,12 +100,14 @@ exports.createParcel = async (req, res) => {
         await connection.rollback();
         return res.status(400).json({ message: "Insufficient balance" });
       }
-
-      await connection.execute(
-        "INSERT INTO wallet_transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)",
-        [userId, "payment", finalPrice, "Parcel delivery"]
-      );
     }
+
+
+    await connection.execute(
+      "INSERT INTO wallet_transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)",
+      [userId, "payment", finalPrice, "Parcel delivery"]
+    );
+
 
     const pinCode = crypto.randomInt(100000, 999999).toString();
 

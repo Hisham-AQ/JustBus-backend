@@ -69,30 +69,33 @@ exports.getPassengers = async (req, res) => {
 
         const [rows] = await db.query(
             `SELECT
-                bs.id,
-                u.name,
-                bs.seat_number,
-                bs.is_boarded,
-                bs.is_dropped_off,
-                t.status
+        bs.id,
+        u.name,
+        bs.seat_number,
+        bs.is_boarded,
+        bs.is_dropped_off,
+        t.status,
 
-            FROM booking_seats bs
+        t.pickup_location,
+        t.dropoff_location
 
-            JOIN bookings b
-            ON bs.booking_id = b.id
+    FROM booking_seats bs
 
-            JOIN users u
-            ON b.user_id = u.id
+    JOIN bookings b
+    ON bs.booking_id = b.id
 
-            JOIN trips t
-            ON b.trip_id = t.id
+    JOIN users u
+    ON b.user_id = u.id
 
-            JOIN drivers d
-            ON t.driver_id = d.id
+    JOIN trips t
+    ON b.trip_id = t.id
 
-            WHERE d.user_id = ?
+    JOIN drivers d
+    ON t.driver_id = d.id
 
-            ORDER BY bs.seat_number ASC`,
+    WHERE d.user_id = ?
+
+    ORDER BY bs.seat_number ASC`,
             [userId]
         );
 
@@ -165,15 +168,26 @@ exports.endTrip = async (req, res) => {
     const { tripId } = req.body;
 
     try {
+
         await db.query(
             `
-  UPDATE trips
-  SET
-    status = 'completed',
-    current_lat = NULL,
-    current_lng = NULL
-  WHERE id = ?
-  `,
+UPDATE trips
+SET
+  status = 'completed',
+  current_lat = NULL,
+  current_lng = NULL
+WHERE id = ?
+`,
+            [tripId]
+        );
+
+        await db.query(
+            `
+UPDATE bookings
+SET status = 'completed'
+WHERE trip_id = ?
+AND status = 'confirmed'
+`,
             [tripId]
         );
 
