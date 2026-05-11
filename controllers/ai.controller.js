@@ -12,8 +12,7 @@ exports.chat = async (req, res) => {
         from_city,
         to_city,
         departure_time,
-        price,
-        available_seats
+        price
       FROM trips
       LIMIT 10
     `);
@@ -26,8 +25,8 @@ You help students with:
 - bus trips
 - booking
 - schedules
-- stations
 - prices
+- stations
 
 Answer shortly and clearly.
 
@@ -38,30 +37,41 @@ User:
 ${message}
 
 `;
+
     const response =
       await axios.post(
 
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        "https://openrouter.ai/api/v1/chat/completions",
 
         {
-          contents: [
+          model:
+            "mistralai/mistral-7b-instruct",
+
+          messages: [
             {
-              parts: [
-                {
-                  text: prompt,
-                },
-              ],
+              role: "user",
+              content: prompt,
             },
           ],
+        },
+
+        {
+          headers: {
+
+            Authorization:
+              `Bearer ${process.env.OPENROUTER_API_KEY}`,
+
+            "Content-Type":
+              "application/json",
+          },
         }
       );
 
     const reply =
 
       response.data
-        ?.candidates?.[0]
-        ?.content?.parts?.[0]
-        ?.text ||
+        ?.choices?.[0]
+        ?.message?.content ||
 
       "ما قدرت أفهم 😅";
 
@@ -73,7 +83,6 @@ ${message}
   } catch (err) {
 
     console.error(
-
       err.response?.data ||
       err.message
     );
