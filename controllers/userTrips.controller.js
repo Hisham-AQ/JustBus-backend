@@ -211,8 +211,7 @@ GROUP BY
 
         ...trip,
 
-        eta_minutes:
-          etaMinutes,
+        eta_minutes: null,
 
         eta_type:
           trip.is_boarded
