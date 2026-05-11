@@ -260,7 +260,7 @@ exports.scanTicket = async (req, res) => {
             `UPDATE bookings
              SET is_boarded = 1
              WHERE id = ?`,
-            [booking.booking_id]
+            [booking.id]
         );
 
         const [drivers] = await db.query(
