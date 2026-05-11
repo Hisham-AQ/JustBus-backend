@@ -164,6 +164,8 @@ ON b.trip_id = t.id
 
 WHERE t.id = ?
 AND b.user_id = ?
+ORDER BY b.id DESC
+
 
 LIMIT 1
 `,
