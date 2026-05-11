@@ -137,10 +137,9 @@ SELECT
     t.current_lng,
     t.status,
 
-    MAX(bs.is_boarded)
-      AS is_boarded,
+    bs.is_boarded,
 
-    t.dropoff_location
+    b.dropoff_location
 
 FROM trips t
 
@@ -153,12 +152,6 @@ ON bs.booking_id = b.id
 WHERE t.id = ?
 AND b.user_id = ?
 
-GROUP BY
-  t.id,
-  t.current_lat,
-  t.current_lng,
-  t.status,
-  t.dropoff_location
   `,
       [tripId, userId]
     );
@@ -180,18 +173,19 @@ GROUP BY
       trip.is_boarded
         ? trip.dropoff_location
         : pickupLocation;
+
     console.log(
       "TARGET LOCATION:",
       targetLocation
     );
 
-    console.log(
-      "BOARDED:",
-      trip.is_boarded
-    );
+    const finalLocation =
+      Array.isArray(targetLocation)
+        ? targetLocation[0]
+        : targetLocation;
 
     const normalizedLocation =
-      String(targetLocation)
+      String(finalLocation || "")
         .trim();
 
     const targetCoords =
@@ -201,7 +195,8 @@ GROUP BY
     if (!targetCoords) {
 
       return res.status(400).json({
-        message: "Invalid pickup location"
+        message:
+          `Location not found: ${normalizedLocation}`
       });
     }
 
