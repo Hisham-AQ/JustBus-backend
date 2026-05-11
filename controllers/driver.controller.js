@@ -76,8 +76,8 @@ exports.getPassengers = async (req, res) => {
         bs.is_dropped_off,
         t.status,
 
-        t.pickup_location,
-        t.dropoff_location
+       b.pickup_location,
+       b.dropoff_location
 
     FROM booking_seats bs
 
