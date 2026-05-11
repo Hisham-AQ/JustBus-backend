@@ -154,11 +154,12 @@ SELECT
 
     bs.is_boarded,
 
+    b.pickup_location,
     b.dropoff_location
 
-FROM trips t
+FROM bookings b
 
-JOIN bookings b
+JOIN trips t
 ON b.trip_id = t.id
 
 JOIN booking_seats bs
@@ -167,7 +168,8 @@ ON bs.booking_id = b.id
 WHERE t.id = ?
 AND b.user_id = ?
 
-  `,
+LIMIT 1
+`,
       [tripId, userId]
     );
 
@@ -180,14 +182,11 @@ AND b.user_id = ?
 
     const trip = rows[0];
 
-    const {
-      pickupLocation
-    } = req.query;
 
     const targetLocation =
       trip.is_boarded
         ? trip.dropoff_location
-        : pickupLocation;
+        : trip.pickup_location;
 
     console.log(
       "TARGET LOCATION:",

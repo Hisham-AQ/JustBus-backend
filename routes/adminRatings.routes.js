@@ -5,7 +5,7 @@ const authenticateToken = require("../middleware/authMiddleware");
 const allowRoles = require("../middleware/roleMiddleware");
 const ratingsController = require("../controllers/userRatings.controller");
 
-// 📊 ANALYTICS
+//  ANALYTICS
 router.get(
   "/analytics",
   authenticateToken,
@@ -13,7 +13,7 @@ router.get(
   ratingsController.getAnalytics
 );
 
-// 💬 COMMENTS
+// COMMENTS
 router.get(
   "/comments",
   authenticateToken,
