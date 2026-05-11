@@ -76,7 +76,7 @@ exports.createParcel = async (req, res) => {
 
       if (reward.type === "free_parcel") {
         finalPrice = 0;
-      } else if (reward.type === "discount_10") {
+      } else if (reward.type === "discount") {
         finalPrice = parseFloat((calculatedPrice * 0.9).toFixed(2));
       } else {
         await connection.rollback();
