@@ -189,10 +189,10 @@ GROUP BY
       "BOARDED:",
       trip.is_boarded
     );
+
     const normalizedLocation =
       String(targetLocation)
-        .trim()
-        .toLowerCase();
+        .trim();
 
     const targetCoords =
       stationCoordinates[
