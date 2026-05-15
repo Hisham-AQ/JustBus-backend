@@ -26,11 +26,36 @@ exports.getTrips = async (req, res) => {
     `);
 
     // ✅ Parse JSON fields
-    const parsed = rows.map(trip => ({
-      ...trip,
-      pickupLocation: trip.pickupLocation ? JSON.parse(trip.pickupLocation) : null,
-      dropoffLocation: trip.dropoffLocation ? JSON.parse(trip.dropoffLocation) : null
-    }));
+    const parsed = rows.map(trip => {
+  let pickup = [];
+  let dropoff = [];
+
+  // SAFE pickup parsing
+  try {
+    pickup =
+      typeof trip.pickupLocation === "string"
+        ? JSON.parse(trip.pickupLocation)
+        : trip.pickupLocation || [];
+  } catch {
+    pickup = [];
+  }
+
+  // SAFE dropoff parsing
+  try {
+    dropoff =
+      typeof trip.dropoffLocation === "string"
+        ? JSON.parse(trip.dropoffLocation)
+        : trip.dropoffLocation || [];
+  } catch {
+    dropoff = [];
+  }
+
+  return {
+    ...trip,
+    pickupLocation: pickup,
+    dropoffLocation: dropoff
+  };
+});
 
     res.json(parsed);
 
@@ -62,10 +87,32 @@ exports.createTrip = async (req, res) => {
       currentLng
     } = req.body;
 
-    // ✅ Proper validation
-    if (!form.departureTime) e.departureTime = 'Departure time required';
-    if (!form.tripDate) e.tripDate = 'Trip date required';
-    if (!form.price) e.price = 'Price required';
+  // ✅ Proper validation
+if (!departureTime || !tripDate || !price) {
+  return res.status(400).json({
+    message: "Missing required fields"
+  });
+}
+
+// Convert station IDs into full station objects
+
+const [pickupStations] = await db.query(
+  `
+  SELECT id, name, lat, lng
+  FROM stations
+  WHERE id IN (?)
+  `,
+  [pickupLocation]
+);
+
+const [dropoffStations] = await db.query(
+  `
+  SELECT id, name, lat, lng
+  FROM stations
+  WHERE id IN (?)
+  `,
+  [dropoffLocation]
+);
 
     await db.query(
       `INSERT INTO trips
@@ -77,8 +124,8 @@ exports.createTrip = async (req, res) => {
       [
         fromCity,
         toCity,
-        JSON.stringify(pickupLocation),   // ✅ JSON
-        JSON.stringify(dropoffLocation), // ✅ JSON
+        JSON.stringify(pickupStations),
+        JSON.stringify(dropoffStations),
         departureTime,
         arrivalTime,
         durationMinutes,
@@ -125,6 +172,24 @@ exports.updateTrip = async (req, res) => {
       currentLng
     } = req.body;
 
+    const [pickupStations] = await db.query(
+  `
+  SELECT id, name, lat, lng
+  FROM stations
+  WHERE id IN (?)
+  `,
+  [pickupLocation]
+);
+
+const [dropoffStations] = await db.query(
+  `
+  SELECT id, name, lat, lng
+  FROM stations
+  WHERE id IN (?)
+  `,
+  [dropoffLocation]
+);
+
     await db.query(
       `UPDATE trips SET
         from_city = ?,
@@ -146,8 +211,8 @@ exports.updateTrip = async (req, res) => {
       [
         fromCity,
         toCity,
-        JSON.stringify(pickupLocation),
-        JSON.stringify(dropoffLocation),
+        JSON.stringify(pickupStations),
+        JSON.stringify(dropoffStations),
         departureTime,
         arrivalTime,
         durationMinutes,

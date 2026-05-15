@@ -1,49 +1,7 @@
 const db = require("../config/db");
 const geolib = require("geolib");
 
-const stationCoordinates = {
 
-  "North Terminal": {
-    lat: 31.995629808817434,
-    lng: 35.91964650163556,
-  },
-
-  "Qween Alia Hospital": {
-    lat: 32.001525772847884,
-    lng: 35.91889548308669,
-  },
-
-  "Yagouz Bridge": {
-    lat: 32.028837894083615,
-    lng: 35.89279145624723,
-  },
-
-  "Alsarh Schools": {
-    lat: 32.05685634250778,
-    lng: 35.87063769457635,
-  },
-
-  "Old Zarqa Complex": {
-    lat: 32.0635622996553,
-    lng: 36.09562624022441,
-  },
-
-  "Al-Hashemi": {
-    lat: 32.13272820449825,
-    lng: 36.112979071325114,
-  },
-
-  "Main Gate": {
-    lat: 32.497808157554395,
-    lng: 35.98654176592043,
-  },
-
-  "Gate 2": {
-    lat: 32.495002976775716,
-    lng: 35.98582293390612,
-  },
-
-};
 exports.getCities = async (req, res) => {
   const [rows] = await db.query(`
     SELECT DISTINCT from_city
@@ -51,7 +9,7 @@ exports.getCities = async (req, res) => {
     WHERE from_city != 'JUST university'
   `);
 
-  res.json(rows);
+res.json(rows);
 };
 
 exports.searchTrips = async (req, res) => {
@@ -80,7 +38,21 @@ exports.searchTrips = async (req, res) => {
   `,
       [from, to, date]
     );
-    res.json(rows);
+    const parsed = rows.map(trip => ({
+  ...trip,
+
+  pickup_location:
+    typeof trip.pickup_location === "string"
+      ? JSON.parse(trip.pickup_location)
+      : trip.pickup_location,
+
+  dropoff_location:
+    typeof trip.dropoff_location === "string"
+      ? JSON.parse(trip.dropoff_location)
+      : trip.dropoff_location
+}));
+
+res.json(parsed);
 
   } catch (err) {
     console.error("SEARCH TRIPS ERROR:", err);
@@ -183,10 +155,20 @@ LIMIT 1
     console.log("USER ID => ", userId);
     console.log("TRIP DATA => ", trip);
 
+    const pickupLocation =
+  typeof trip.pickup_location === "string"
+    ? JSON.parse(trip.pickup_location)
+    : trip.pickup_location;
+
+const dropoffLocation =
+  typeof trip.dropoff_location === "string"
+    ? JSON.parse(trip.dropoff_location)
+    : trip.dropoff_location;
+
     const targetLocation =
       trip.is_boarded
-        ? trip.dropoff_location
-        : trip.pickup_location;
+        ? dropoffLocation
+        : pickupLocation;
 
     console.log(
       "TARGET LOCATION:",
@@ -198,19 +180,15 @@ LIMIT 1
         ? targetLocation[0]
         : targetLocation;
 
-    const normalizedLocation =
-      String(finalLocation || "")
-        .trim();
+const targetCoords = {
+  lat: finalLocation.lat,
+  lng: finalLocation.lng
+};
 
-    const targetCoords =
-      stationCoordinates[
-      normalizedLocation
-      ];
     if (!targetCoords) {
 
       return res.status(400).json({
-        message:
-          `Location not found: ${normalizedLocation}`
+       message: "Location coordinates not found"
       });
     }
 

@@ -34,6 +34,7 @@ const notificationsRoutes = require("./routes/notifications.routes");
 const lostItemsRoutes = require("./routes/lostItems.routes");
 const driverRoutes = require("./routes/driver.routes");
 const ratingsRoutes = require("./routes/ratings.routes");
+const stationsRoutes = require("./routes/stations.routes");
 
 
 app.use("/api/auth", require("./routes/auth.routes"));
@@ -61,6 +62,7 @@ app.use("/api", notificationsRoutes);
 app.use("/api", lostItemsRoutes);
 app.use("/api/driver", driverRoutes);
 app.use("/api/ratings", ratingsRoutes);
+app.use("/api/stations", stationsRoutes);
 
 
 const db = require("./config/db");
@@ -127,3 +129,11 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+
+
+///////temp code
+/*(async () => {
+  const hash = await bcrypt.hash("password123", 10);
+  console.log("HASH:", hash);
+})();*/
