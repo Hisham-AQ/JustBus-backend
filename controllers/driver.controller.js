@@ -505,18 +505,20 @@ exports.reportMisconduct = async (req, res) => {
         }
         await db.query(
             `INSERT INTO misconduct_reports
-    (
-         driver_id,
-         booking_id,
-          seat_number,
-           passenger_name,
-          category,
-          severity,
-            description
-           )
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        (
+     driver_id,
+     trip_id,
+     booking_id,
+     seat_number,
+     passenger_name,
+     category,
+     severity,
+     description
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 driverId,
+                tripId,
                 bookingId,
                 seat_number,
                 passenger_name || null,
