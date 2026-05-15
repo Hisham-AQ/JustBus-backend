@@ -155,15 +155,45 @@ LIMIT 1
     console.log("USER ID => ", userId);
     console.log("TRIP DATA => ", trip);
 
-    const pickupLocation =
-      typeof trip.pickup_location === "string"
-        ? JSON.parse(trip.pickup_location)
-        : trip.pickup_location;
+    let pickupLocation = trip.pickup_location;
 
-    const dropoffLocation =
-      typeof trip.dropoff_location === "string"
-        ? JSON.parse(trip.dropoff_location)
-        : trip.dropoff_location;
+    if (typeof pickupLocation === "string") {
+      try {
+        pickupLocation = JSON.parse(pickupLocation);
+      } catch (_) {
+
+        const [stationRows] = await db.query(
+          "SELECT lat, lng FROM stations WHERE name = ? LIMIT 1",
+          [pickupLocation]
+        );
+
+        pickupLocation = {
+          name: pickupLocation,
+          lat: stationRows[0]?.lat ?? null,
+          lng: stationRows[0]?.lng ?? null,
+        };
+      }
+    }
+
+    let dropoffLocation = trip.dropoff_location;
+
+    if (typeof dropoffLocation === "string") {
+      try {
+        dropoffLocation = JSON.parse(dropoffLocation);
+      } catch (_) {
+
+        const [stationRows] = await db.query(
+          "SELECT lat, lng FROM stations WHERE name = ? LIMIT 1",
+          [dropoffLocation]
+        );
+
+        dropoffLocation = {
+          name: dropoffLocation,
+          lat: stationRows[0]?.lat ?? null,
+          lng: stationRows[0]?.lng ?? null,
+        };
+      }
+    }
 
     trip.pickup_location = pickupLocation;
     trip.dropoff_location = dropoffLocation;
@@ -173,10 +203,6 @@ LIMIT 1
         ? dropoffLocation
         : pickupLocation;
 
-    const targetCoords = {
-      lat: targetLocation.lat,
-      lng: targetLocation.lng
-    };
 
     if (
       !targetLocation ||
@@ -187,6 +213,11 @@ LIMIT 1
         message: "Location coordinates not found"
       });
     }
+
+    const targetCoords = {
+      lat: targetLocation.lat,
+      lng: targetLocation.lng
+    };
 
     if (!trip.current_lat || !trip.current_lng) {
       return res.json({
