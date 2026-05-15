@@ -51,15 +51,48 @@ exports.getCurrentTrip = async (req, res) => {
 
         const trip = rows[0];
 
-        trip.pickup_location =
-            typeof trip.pickup_location === "string"
-                ? JSON.parse(trip.pickup_location)
-                : trip.pickup_location;
+        let pickupLocation = trip.pickup_location;
 
-        trip.dropoff_location =
-            typeof trip.dropoff_location === "string"
-                ? JSON.parse(trip.dropoff_location)
-                : trip.dropoff_location;
+        if (typeof pickupLocation === "string") {
+            try {
+                pickupLocation = JSON.parse(pickupLocation);
+            } catch (_) {
+
+                const [stationRows] = await db.query(
+                    "SELECT lat, lng FROM stations WHERE name = ? LIMIT 1",
+                    [pickupLocation]
+                );
+
+                pickupLocation = {
+                    name: pickupLocation,
+                    lat: stationRows[0]?.lat ?? null,
+                    lng: stationRows[0]?.lng ?? null,
+                };
+            }
+        }
+
+        let dropoffLocation = trip.dropoff_location;
+
+        if (typeof dropoffLocation === "string") {
+            try {
+                dropoffLocation = JSON.parse(dropoffLocation);
+            } catch (_) {
+
+                const [stationRows] = await db.query(
+                    "SELECT lat, lng FROM stations WHERE name = ? LIMIT 1",
+                    [dropoffLocation]
+                );
+
+                dropoffLocation = {
+                    name: dropoffLocation,
+                    lat: stationRows[0]?.lat ?? null,
+                    lng: stationRows[0]?.lng ?? null,
+                };
+            }
+        }
+
+        trip.pickup_location = pickupLocation;
+        trip.dropoff_location = dropoffLocation;
 
         res.json(trip);
 
@@ -111,19 +144,56 @@ exports.getPassengers = async (req, res) => {
             [userId]
         );
 
-        const parsed = rows.map(row => ({
-            ...row,
+        const parsed = [];
 
-            pickup_location:
-                typeof row.pickup_location === "string"
-                    ? JSON.parse(row.pickup_location)
-                    : row.pickup_location,
+        for (const row of rows) {
 
-            dropoff_location:
-                typeof row.dropoff_location === "string"
-                    ? JSON.parse(row.dropoff_location)
-                    : row.dropoff_location
-        }));
+            let pickupLocation = row.pickup_location;
+
+            if (typeof pickupLocation === "string") {
+                try {
+                    pickupLocation = JSON.parse(pickupLocation);
+                } catch (_) {
+
+                    const [stationRows] = await db.query(
+                        "SELECT lat, lng FROM stations WHERE name = ? LIMIT 1",
+                        [pickupLocation]
+                    );
+
+                    pickupLocation = {
+                        name: pickupLocation,
+                        lat: stationRows[0]?.lat ?? null,
+                        lng: stationRows[0]?.lng ?? null,
+                    };
+                }
+            }
+
+            let dropoffLocation = row.dropoff_location;
+
+            if (typeof dropoffLocation === "string") {
+                try {
+                    dropoffLocation = JSON.parse(dropoffLocation);
+                } catch (_) {
+
+                    const [stationRows] = await db.query(
+                        "SELECT lat, lng FROM stations WHERE name = ? LIMIT 1",
+                        [dropoffLocation]
+                    );
+
+                    dropoffLocation = {
+                        name: dropoffLocation,
+                        lat: stationRows[0]?.lat ?? null,
+                        lng: stationRows[0]?.lng ?? null,
+                    };
+                }
+            }
+
+            parsed.push({
+                ...row,
+                pickup_location: pickupLocation,
+                dropoff_location: dropoffLocation
+            });
+        }
 
         res.json(parsed);
 
