@@ -9,7 +9,7 @@ exports.getCities = async (req, res) => {
     WHERE from_city != 'JUST university'
   `);
 
-res.json(rows);
+  res.json(rows);
 };
 
 exports.searchTrips = async (req, res) => {
@@ -39,20 +39,20 @@ exports.searchTrips = async (req, res) => {
       [from, to, date]
     );
     const parsed = rows.map(trip => ({
-  ...trip,
+      ...trip,
 
-  pickup_location:
-    typeof trip.pickup_location === "string"
-      ? JSON.parse(trip.pickup_location)
-      : trip.pickup_location,
+      pickup_location:
+        typeof trip.pickup_location === "string"
+          ? JSON.parse(trip.pickup_location)
+          : trip.pickup_location,
 
-  dropoff_location:
-    typeof trip.dropoff_location === "string"
-      ? JSON.parse(trip.dropoff_location)
-      : trip.dropoff_location
-}));
+      dropoff_location:
+        typeof trip.dropoff_location === "string"
+          ? JSON.parse(trip.dropoff_location)
+          : trip.dropoff_location
+    }));
 
-res.json(parsed);
+    res.json(parsed);
 
   } catch (err) {
     console.error("SEARCH TRIPS ERROR:", err);
@@ -156,44 +156,46 @@ LIMIT 1
     console.log("TRIP DATA => ", trip);
 
     const pickupLocation =
-  typeof trip.pickup_location === "string"
-    ? JSON.parse(trip.pickup_location)
-    : trip.pickup_location;
+      typeof trip.pickup_location === "string"
+        ? JSON.parse(trip.pickup_location)
+        : trip.pickup_location;
 
-const dropoffLocation =
-  typeof trip.dropoff_location === "string"
-    ? JSON.parse(trip.dropoff_location)
-    : trip.dropoff_location;
+    const pickupLocation =
+      typeof trip.pickup_location === "string"
+        ? JSON.parse(trip.pickup_location)
+        : trip.pickup_location;
+
+    const dropoffLocation =
+      typeof trip.dropoff_location === "string"
+        ? JSON.parse(trip.dropoff_location)
+        : trip.dropoff_location;
+
+    trip.pickup_location = pickupLocation;
+    trip.dropoff_location = dropoffLocation;
 
     const targetLocation =
       trip.is_boarded
         ? dropoffLocation
         : pickupLocation;
 
-    console.log(
-      "TARGET LOCATION:",
-      targetLocation
-    );
+    const targetCoords = {
+      lat: targetLocation.lat,
+      lng: targetLocation.lng
+    };
 
-    const finalLocation =
-      Array.isArray(targetLocation)
-        ? targetLocation[0]
-        : targetLocation;
-
-const targetCoords = {
-  lat: finalLocation.lat,
-  lng: finalLocation.lng
-};
-
-    if (!targetCoords) {
-
+    if (
+      !targetLocation ||
+      targetLocation.lat == null ||
+      targetLocation.lng == null
+    ) {
       return res.status(400).json({
-       message: "Location coordinates not found"
+        message: "Location coordinates not found"
       });
     }
 
     if (!trip.current_lat || !trip.current_lng) {
-
+      trip.pickup_location = pickupLocation;
+      trip.dropoff_location = dropoffLocation;
       return res.json({
 
         ...trip,
