@@ -9,9 +9,15 @@ const controller =
     require("../controllers/driver.controller");
 
 router.get(
-    "/current-trip",
+    "/trips",
     authMiddleware,
-    controller.getCurrentTrip
+    controller.getDriverTrips
+);
+
+router.get(
+    "/trips/:tripId",
+    authMiddleware,
+    controller.getDriverTripById
 );
 
 router.patch(
