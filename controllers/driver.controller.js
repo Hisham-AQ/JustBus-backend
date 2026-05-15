@@ -269,8 +269,9 @@ SET
   current_lat = NULL,
   current_lng = NULL
 WHERE id = ?
+AND driver_id = ?
 `,
-            [tripId]
+            [tripId, driverId]
         );
 
         await db.query(
@@ -550,8 +551,13 @@ exports.updateLocation = async (req, res) => {
             `UPDATE trips
              SET current_lat = ?,
                  current_lng = ?
-             WHERE id = ?`,
-            [lat, lng, tripId]
+             WHERE id = ?
+             AND driver_id = (
+    SELECT id
+    FROM drivers
+    WHERE user_id = ?
+)`,
+            [lat, lng, tripId, req.user.id]
         );
 
         res.json({
