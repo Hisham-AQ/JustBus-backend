@@ -1,10 +1,50 @@
 const db = require("../config/db");
 
-exports.getCurrentTrip = async (req, res) => {
+exports.getDriverTrips = async (req, res) => {
 
     const userId = req.user.id;
-    console.log(req.user);
-    console.log(userId);
+
+    try {
+
+        const [rows] = await db.query(
+            `SELECT
+                t.id,
+                t.from_city,
+                t.to_city,
+                t.trip_date,
+                t.departure_time,
+                t.arrival_time,
+                t.status
+
+            FROM trips t
+
+            JOIN drivers d
+            ON t.driver_id = d.id
+
+            WHERE d.user_id = ?
+
+            ORDER BY
+                t.trip_date DESC,
+                t.departure_time ASC`,
+            [userId]
+        );
+
+        res.json(rows);
+
+    } catch (err) {
+
+        console.error(err);
+
+        res.status(500).json({
+            message: "Server error"
+        });
+    }
+};
+
+exports.getDriverTripById = async (req, res) => {
+
+    const userId = req.user.id;
+    const { tripId } = req.params;
 
     try {
 
@@ -35,64 +75,18 @@ exports.getCurrentTrip = async (req, res) => {
             ON t.driver_id = d.id
 
             WHERE d.user_id = ?
+            AND t.id = ?`,
 
-            ORDER BY t.trip_date DESC
-
-            LIMIT 1`,
-            [userId]
+            [userId, tripId]
         );
 
         if (rows.length === 0) {
-
             return res.status(404).json({
-                message: "No assigned trip"
+                message: "Trip not found"
             });
         }
 
         const trip = rows[0];
-
-        let pickupLocation = trip.pickup_location;
-
-        if (typeof pickupLocation === "string") {
-            try {
-                pickupLocation = JSON.parse(pickupLocation);
-            } catch (_) {
-
-                const [stationRows] = await db.query(
-                    "SELECT lat, lng FROM stations WHERE name = ? LIMIT 1",
-                    [pickupLocation]
-                );
-
-                pickupLocation = {
-                    name: pickupLocation,
-                    lat: stationRows[0]?.lat ?? null,
-                    lng: stationRows[0]?.lng ?? null,
-                };
-            }
-        }
-
-        let dropoffLocation = trip.dropoff_location;
-
-        if (typeof dropoffLocation === "string") {
-            try {
-                dropoffLocation = JSON.parse(dropoffLocation);
-            } catch (_) {
-
-                const [stationRows] = await db.query(
-                    "SELECT lat, lng FROM stations WHERE name = ? LIMIT 1",
-                    [dropoffLocation]
-                );
-
-                dropoffLocation = {
-                    name: dropoffLocation,
-                    lat: stationRows[0]?.lat ?? null,
-                    lng: stationRows[0]?.lng ?? null,
-                };
-            }
-        }
-
-        trip.pickup_location = pickupLocation;
-        trip.dropoff_location = dropoffLocation;
 
         res.json(trip);
 
@@ -109,6 +103,7 @@ exports.getCurrentTrip = async (req, res) => {
 exports.getPassengers = async (req, res) => {
 
     const userId = req.user.id;
+    const { tripId } = req.query;
 
     try {
 
@@ -139,9 +134,10 @@ exports.getPassengers = async (req, res) => {
     ON t.driver_id = d.id
 
     WHERE d.user_id = ?
+    AND t.id = ?
 
     ORDER BY bs.seat_number ASC`,
-            [userId]
+            [userId, tripId]
         );
 
         const parsed = [];
@@ -300,7 +296,7 @@ AND status = 'confirmed'
 };
 
 exports.scanTicket = async (req, res) => {
-    const { qrToken } = req.body;
+    const { qrToken, tripId } = req.body;
 
     console.log("QR RECEIVED:", qrToken);
 
@@ -310,14 +306,21 @@ exports.scanTicket = async (req, res) => {
 
         const [rows] = await db.query(
             `SELECT 
-    b.id AS booking_id,
-    b.status,
-    b.is_boarded
+             b.id AS booking_id,
+             b.status,
+             b.is_boarded
 
-FROM bookings b
+             FROM bookings b
 
-WHERE b.id = ?`,
-            [bookingId]
+             JOIN trips t
+             ON b.trip_id = t.id
+
+             WHERE b.id = ?
+             AND t.id = ?`,
+
+
+            [bookingId, tripId]
+
         );
 
         if (rows.length === 0) {
@@ -397,8 +400,7 @@ WHERE b.id = ?`,
 
 
 exports.dropOffPassenger = async (req, res) => {
-    const { seatId } = req.body;
-
+    const { seatId, tripId } = req.body;
     try {
 
         await db.query(
@@ -416,8 +418,10 @@ exports.dropOffPassenger = async (req, res) => {
              SET bs.is_dropped_off = 1
 
           WHERE bs.id = ?
-            AND d.user_id = ?`,
-            [seatId, req.user.id]
+            AND d.user_id = ?
+            AND t.id = ?`,
+
+            [seatId, req.user.id, tripId]
         );
 
         res.json({
@@ -442,12 +446,13 @@ exports.reportMisconduct = async (req, res) => {
         passenger_name,
         category,
         severity,
-        description
+        description,
+        tripId
+
     } = req.body;
 
     try {
 
-        // get actual driver id
         const [drivers] = await db.query(
             `SELECT id
              FROM drivers
@@ -478,10 +483,11 @@ exports.reportMisconduct = async (req, res) => {
     WHERE
         t.driver_id = ?
         AND bs.seat_number = ?
+            AND t.id = ?
 
     LIMIT 1
     `,
-            [driverId, seat_number]
+            [driverId, seat_number, tripId]
         );
 
         const bookingId =
@@ -561,3 +567,5 @@ exports.updateLocation = async (req, res) => {
         });
     }
 };
+
+
