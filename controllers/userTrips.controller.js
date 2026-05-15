@@ -160,11 +160,6 @@ LIMIT 1
         ? JSON.parse(trip.pickup_location)
         : trip.pickup_location;
 
-    const pickupLocation =
-      typeof trip.pickup_location === "string"
-        ? JSON.parse(trip.pickup_location)
-        : trip.pickup_location;
-
     const dropoffLocation =
       typeof trip.dropoff_location === "string"
         ? JSON.parse(trip.dropoff_location)
@@ -194,8 +189,6 @@ LIMIT 1
     }
 
     if (!trip.current_lat || !trip.current_lng) {
-      trip.pickup_location = pickupLocation;
-      trip.dropoff_location = dropoffLocation;
       return res.json({
 
         ...trip,

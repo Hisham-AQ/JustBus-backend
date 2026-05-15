@@ -204,6 +204,13 @@ exports.confirmBooking = async (req, res) => {
         "INSERT INTO wallet_transactions (user_id, type, amount) VALUES (?, ?, ?)",
         [userId, "payment", amount]
       );
+    } else {
+
+      await conn.execute(
+        "INSERT INTO wallet_transactions (user_id, type, amount) VALUES (?, ?, ?)",
+        [userId, "reward", 0]
+      );
+
     }
 
     if (rewardId) {

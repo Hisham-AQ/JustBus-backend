@@ -49,7 +49,19 @@ exports.getCurrentTrip = async (req, res) => {
             });
         }
 
-        res.json(rows[0]);
+        const trip = rows[0];
+
+        trip.pickup_location =
+            typeof trip.pickup_location === "string"
+                ? JSON.parse(trip.pickup_location)
+                : trip.pickup_location;
+
+        trip.dropoff_location =
+            typeof trip.dropoff_location === "string"
+                ? JSON.parse(trip.dropoff_location)
+                : trip.dropoff_location;
+
+        res.json(trip);
 
     } catch (err) {
 
@@ -99,7 +111,21 @@ exports.getPassengers = async (req, res) => {
             [userId]
         );
 
-        res.json(rows);
+        const parsed = rows.map(row => ({
+            ...row,
+
+            pickup_location:
+                typeof row.pickup_location === "string"
+                    ? JSON.parse(row.pickup_location)
+                    : row.pickup_location,
+
+            dropoff_location:
+                typeof row.dropoff_location === "string"
+                    ? JSON.parse(row.dropoff_location)
+                    : row.dropoff_location
+        }));
+
+        res.json(parsed);
 
     } catch (err) {
 
