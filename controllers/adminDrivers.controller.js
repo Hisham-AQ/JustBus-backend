@@ -3,6 +3,7 @@ const db = require("../config/db");
 // ================= GET DRIVERS =================
 exports.getDrivers = async (req, res) => {
   try {
+
     const [rows] = await db.query(`
       SELECT 
         d.id,
@@ -12,18 +13,46 @@ exports.getDrivers = async (req, res) => {
         d.license_number AS licenseNumber,
         d.status,
         d.bus_id AS busId,
-        b.plate_number AS busPlate,
-        r.name AS routeName
+
+        b.id AS bus_id,
+        b.plate_number,
+        b.model,
+        b.capacity
+
       FROM drivers d
-      LEFT JOIN buses b ON d.bus_id = b.id
-      LEFT JOIN routes r ON b.route_id = r.id
+
+      LEFT JOIN buses b
+      ON d.bus_id = b.id
     `);
 
-    res.json(rows);
+    const formatted = rows.map(driver => ({
+      id: driver.id,
+      name: driver.name,
+      phone: driver.phone,
+      email: driver.email,
+      licenseNumber: driver.licenseNumber,
+      status: driver.status,
+      busId: driver.busId,
+
+      bus: driver.bus_id
+        ? {
+            id: driver.bus_id,
+            plateNumber: driver.plate_number,
+            model: driver.model,
+            capacity: driver.capacity,
+          }
+        : null
+    }));
+
+    res.json(formatted);
 
   } catch (err) {
+
     console.error("GET DRIVERS ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+
+    res.status(500).json({
+      message: "Server error"
+    });
   }
 };
 

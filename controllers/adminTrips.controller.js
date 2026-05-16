@@ -4,25 +4,42 @@ const db = require("../config/db");
 exports.getTrips = async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT 
-        id,
-        from_city AS fromCity,
-        to_city AS toCity,
-        pickup_location AS pickupLocation,
-        dropoff_location AS dropoffLocation,
-        departure_time AS departureTime,
-        arrival_time AS arrivalTime,
-        duration_minutes AS durationMinutes,
-        price,
-        available_seats AS availableSeats,
-        trip_date AS tripDate,
-        status,
-        driver_id AS driverId,
-        bus_id AS busId,
-        current_lat AS currentLat,
-        current_lng AS currentLng
-      FROM trips
-      ORDER BY trip_date, departure_time
+      SELECT
+  t.id,
+  t.from_city AS fromCity,
+  t.to_city AS toCity,
+
+  t.pickup_location AS pickupLocation,
+  t.dropoff_location AS dropoffLocation,
+
+  t.departure_time AS departureTime,
+  t.arrival_time AS arrivalTime,
+  t.duration_minutes AS durationMinutes,
+
+  t.price,
+  t.available_seats AS availableSeats,
+  t.trip_date AS tripDate,
+
+  t.status,
+
+  t.driver_id AS driverId,
+  d.name AS driverName,
+
+  t.bus_id AS busId,
+  b.plate_number AS busPlate,
+
+  t.current_lat AS currentLat,
+  t.current_lng AS currentLng
+
+FROM trips t
+
+LEFT JOIN drivers d
+ON t.driver_id = d.id
+
+LEFT JOIN buses b
+ON t.bus_id = b.id
+
+ORDER BY t.trip_date, t.departure_time
     `);
 
     // ✅ Parse JSON fields
@@ -114,6 +131,64 @@ const [dropoffStations] = await db.query(
   [dropoffLocation]
 );
 
+if (driverId) {
+
+  const [conflict] = await db.query(
+    `
+    SELECT id
+    FROM trips
+    WHERE driver_id = ?
+    AND trip_date = ?
+    AND status != 'completed'
+    AND (
+      departure_time = ?
+      OR arrival_time = ?
+    )
+    `,
+    [
+      driverId,
+      tripDate,
+      departureTime,
+      arrivalTime
+    ]
+  );
+
+  if (conflict.length > 0) {
+    return res.status(400).json({
+      message: "Driver already assigned to another trip at this time"
+    });
+  }
+}
+
+if (busId) {
+
+  const [conflict] = await db.query(
+    `
+    SELECT id
+    FROM trips
+    WHERE bus_id = ?
+    AND trip_date = ?
+    AND status != 'completed'
+    AND (
+      departure_time = ?
+      OR arrival_time = ?
+    )
+    `,
+    [
+      busId,
+      tripDate,
+      departureTime,
+      arrivalTime
+    ]
+  );
+
+  if (conflict.length > 0) {
+    return res.status(400).json({
+      message: "Bus already assigned to another trip at this time"
+    });
+  }
+}
+
     await db.query(
       `INSERT INTO trips
       (from_city, to_city, pickup_location, dropoff_location,
@@ -189,6 +264,68 @@ const [dropoffStations] = await db.query(
   `,
   [dropoffLocation]
 );
+
+if (driverId) {
+
+  const [conflict] = await db.query(
+    `
+    SELECT id
+    FROM trips
+    WHERE driver_id = ?
+    AND trip_date = ?
+    AND id != ?
+    AND status != 'completed'
+    AND (
+      departure_time = ?
+      OR arrival_time = ?
+    )
+    `,
+    [
+      driverId,
+      tripDate,
+      id,
+      departureTime,
+      arrivalTime
+    ]
+  );
+
+  if (conflict.length > 0) {
+    return res.status(400).json({
+      message: "Driver already assigned to another trip at this time"
+    });
+  }
+}
+
+if (busId) {
+
+  const [conflict] = await db.query(
+    `
+    SELECT id
+    FROM trips
+    WHERE bus_id = ?
+    AND trip_date = ?
+    AND id != ?
+    AND status != 'completed'
+    AND (
+      departure_time = ?
+      OR arrival_time = ?
+    )
+    `,
+    [
+      busId,
+      tripDate,
+      id,
+      departureTime,
+      arrivalTime
+    ]
+  );
+
+  if (conflict.length > 0) {
+    return res.status(400).json({
+      message: "Bus already assigned to another trip at this time"
+    });
+  }
+}
 
     await db.query(
       `UPDATE trips SET

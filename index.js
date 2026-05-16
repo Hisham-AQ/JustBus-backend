@@ -42,6 +42,7 @@ app.use("/api/admin/trips", adminTripsRoutes);
 app.use("/api/routes", routesRoutes);
 app.use("/api/buses", require("./routes/buses.routes"));
 app.use("/api/admin", adminRoutes);
+app.use("/api/drivers", driversRoutes);
 app.use("/api", require("./routes/userTrips.routes"));
 app.use("/api", require("./routes/bookings.routes"));
 app.use("/api", require("./routes/parcels.routes"));

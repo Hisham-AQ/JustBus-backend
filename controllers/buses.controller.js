@@ -4,21 +4,22 @@ const db = require("../config/db");
 exports.getBuses = async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT 
-        b.id,
-        b.plate_number AS plateNumber,
-        b.capacity,
-        b.status,
-        b.model,
-        b.bus_condition AS \`condition\`,
-        b.route_id AS routeId,
-        r.name AS routeName,
-        d.id AS driverId,
-        d.name AS driverName
-      FROM buses b
-      LEFT JOIN routes r ON b.route_id = r.id
-      LEFT JOIN drivers d ON d.bus_id = b.id
-    `);
+  SELECT 
+    b.id,
+    b.plate_number AS plateNumber,
+    b.capacity,
+    b.status,
+    b.model,
+    b.bus_condition AS \`condition\`,
+
+    d.id AS driverId,
+    d.name AS driverName
+
+  FROM buses b
+
+  LEFT JOIN drivers d
+  ON d.bus_id = b.id
+`);
 
     res.json(rows);
 
@@ -31,16 +32,22 @@ exports.getBuses = async (req, res) => {
 // ================= CREATE BUS =================
 exports.createBus = async (req, res) => {
   try {
-    const { plateNumber, capacity, status, model, condition, routeId } = req.body;
+const { plateNumber, capacity, status, model, condition } = req.body;
 
     if (!plateNumber || !capacity) {
       return res.status(400).json({ message: "Missing fields" });
     }
 
     const [result] = await db.execute(
-      `INSERT INTO buses (plate_number, capacity, status, model, bus_condition, route_id)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [plateNumber, capacity, status || "active", model || null, condition || null, routeId || null]
+      `INSERT INTO buses (plate_number, capacity, status, model, bus_condition)
+VALUES (?, ?, ?, ?, ?)`,
+      [
+  plateNumber,
+  capacity,
+  status || "active",
+  model || null,
+  condition || null
+      ]
     );
 
     res.status(201).json({
@@ -58,13 +65,20 @@ exports.createBus = async (req, res) => {
 exports.updateBus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { plateNumber, capacity, status, model, condition, routeId } = req.body;
+    const { plateNumber, capacity, status, model, condition } = req.body;
 
     await db.execute(
       `UPDATE buses 
-       SET plate_number = ?, capacity = ?, status = ?, model = ?, bus_condition = ?, route_id = ?
+       SET plate_number = ?, capacity = ?, status = ?, model = ?, bus_condition = ?
        WHERE id = ?`,
-      [plateNumber, capacity, status, model, condition, routeId, id]
+      [
+  plateNumber,
+  capacity,
+  status,
+  model,
+  condition,
+  id
+]
     );
 
     res.json({ message: "Bus updated successfully" });
