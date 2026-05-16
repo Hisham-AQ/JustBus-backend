@@ -7,7 +7,7 @@ const authenticateToken = require("../../middleware/authMiddleware");
 
 router.get("/cities", tripsController.getCities);
 
-router.get("/trips", tripsController.searchTrips);
+router.get("/", tripsController.searchTrips);
 
 router.get(
   "/my",
@@ -16,7 +16,7 @@ router.get(
 );
 
 router.get(
-  "/trips/:tripId/seats",
+  "/:tripId/seats",
   tripsController.getSeats
 );
 
