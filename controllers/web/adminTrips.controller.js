@@ -99,7 +99,6 @@ exports.createTrip = async (req, res) => {
       tripDate,
       status,
       driverId,
-      busId,
       currentLat,
       currentLng
     } = req.body;
@@ -189,6 +188,24 @@ if (busId) {
   }
 }
 
+let busId = null;
+
+if (driverId) {
+
+  const [drivers] = await db.query(
+    `
+    SELECT bus_id
+    FROM drivers
+    WHERE id = ?
+    `,
+    [driverId]
+  );
+
+  if (drivers.length > 0) {
+    busId = drivers[0].bus_id;
+  }
+}
+
     await db.query(
       `INSERT INTO trips
       (from_city, to_city, pickup_location, dropoff_location,
@@ -242,7 +259,6 @@ exports.updateTrip = async (req, res) => {
       tripDate,
       status,
       driverId,
-      busId,
       currentLat,
       currentLng
     } = req.body;
@@ -264,6 +280,24 @@ const [dropoffStations] = await db.query(
   `,
   [dropoffLocation]
 );
+
+let busId = null;
+
+if (driverId) {
+
+  const [drivers] = await db.query(
+    `
+    SELECT bus_id
+    FROM drivers
+    WHERE id = ?
+    `,
+    [driverId]
+  );
+
+  if (drivers.length > 0) {
+    busId = drivers[0].bus_id;
+  }
+}
 
 if (driverId) {
 

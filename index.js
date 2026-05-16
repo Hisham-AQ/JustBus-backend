@@ -29,6 +29,8 @@ const dashboardRoutes = require("./routes/web/dashboard.routes");
 const alertsRoutes = require("./routes/web/alerts.routes");
 const bookingsRoutes = require("./routes/web/bookings.routes");
 const stationsRoutes = require("./routes/web/stations.routes");
+const adminSpecialTripsRoutes = require("./routes/web/adminSpecialTrips.routes");
+const adminParcelsRoutes = require("./routes/web/adminParcels.routes");
 
 // MOBILE ROUTES
 const authRoutes = require("./routes/mobile/auth.routes");
@@ -45,6 +47,7 @@ const aiRoutes = require("./routes/mobile/ai.routes");
 const usersRoutes = require("./routes/mobile/users.routes");
 const specialTripsRoutes = require("./routes/mobile/specialTrips.routes");
 const parcelsRoutes = require("./routes/mobile/parcels.routes");
+app.use("/api/admin/parcels", adminParcelsRoutes);
 
 
 // ================= ROUTES =================
@@ -63,6 +66,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/alerts", alertsRoutes);
 app.use("/api/bookings", bookingsRoutes);
 app.use("/api/stations", stationsRoutes);
+app.use("/api/admin/special-trips", adminSpecialTripsRoutes);
 
 // MOBILE
 app.use("/api/trips", tripsRoutes);
