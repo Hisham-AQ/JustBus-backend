@@ -17,53 +17,67 @@ const authenticateToken = require("./middleware/authMiddleware");
 const axios = require("axios");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const adminRoutes = require("./routes/admin.routes");
+
+// WEB ROUTES
+const adminRoutes = require("./routes/web/admin.routes");
 const busesRoutes = require("./routes/web/buses.routes");
 const routesRoutes = require("./routes/web/routes.routes");
 const driversRoutes = require("./routes/web/adminDrivers.routes");
 const adminTripsRoutes = require("./routes/web/adminTrips.routes");
 const studentsRoutes = require("./routes/web/students.routes");
 const dashboardRoutes = require("./routes/web/dashboard.routes");
-const adminRatingsRoutes = require("./routes/web/adminRatings.routes");
+const alertsRoutes = require("./routes/web/alerts.routes");
+const bookingsRoutes = require("./routes/web/bookings.routes");
+const stationsRoutes = require("./routes/web/stations.routes");
+
+// MOBILE ROUTES
+const authRoutes = require("./routes/mobile/auth.routes");
 const tripsRoutes = require("./routes/mobile/userTrips.routes");
 const activityRoutes = require("./routes/mobile/activity.routes");
 const walletRoutes = require("./routes/mobile/wallet.routes");
 const cardRoutes = require("./routes/mobile/userCard.routes");
-const rewardsRoutes = require("./routes/mobile/userRewards.routes");
-const notificationsRoutes = require("./routes/notifications.routes");
-const lostItemsRoutes = require("./routes/lostItems.routes");
+const rewardsRoutes = require("./routes/mobile/rewards.routes");
+const notificationsRoutes = require("./routes/mobile/notifications.routes");
+const lostItemsRoutes = require("./routes/mobile/lostItems.routes");
 const driverRoutes = require("./routes/mobile/driver.routes");
-const ratingsRoutes = require("./routes/ratings.routes");
-const stationsRoutes = require("./routes/web/stations.routes");
+const ratingsRoutes = require("./routes/mobile/ratings.routes");
+const aiRoutes = require("./routes/mobile/ai.routes");
+const usersRoutes = require("./routes/mobile/users.routes");
+const specialTripsRoutes = require("./routes/mobile/specialTrips.routes");
+const parcelsRoutes = require("./routes/mobile/parcels.routes");
 
 
-app.use("/api/auth", require("./routes/mobile/auth.routes"));
-app.use("/api/admin/trips", adminTripsRoutes);
-app.use("/api/routes", routesRoutes);
-app.use("/api/buses", require("./routes/web/buses.routes"));
+// ================= ROUTES =================
+
+// AUTH
+app.use("/api/auth", authRoutes);
+
+// WEB
 app.use("/api/admin", adminRoutes);
+app.use("/api/admin/trips", adminTripsRoutes);
+app.use("/api/buses", busesRoutes);
+app.use("/api/routes", routesRoutes);
 app.use("/api/drivers", driversRoutes);
-app.use("/api", require("./routes/mobile/userTrips.routes"));
-app.use("/api", require("./routes/web/bookings.routes"));
-app.use("/api", require("./routes/parcels.routes"));
-app.use("/api", require("./routes/mobile/specialTrips.routes"));
-app.use("/api", require("./routes/mobile/users.routes"));
 app.use("/api/students", studentsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/ratings", adminRatingsRoutes);
-app.use("/api/alerts", require("./routes/web/alerts.routes"));
-app.use("/api/rewards", require("./routes/rewards.routes"));
-app.use("/api", require("./routes/mobile/ai.routes"));
+app.use("/api/alerts", alertsRoutes);
+app.use("/api/bookings", bookingsRoutes);
+app.use("/api/stations", stationsRoutes);
+
+// MOBILE
 app.use("/api/trips", tripsRoutes);
-app.use("/api", activityRoutes);
+app.use("/api/activity", activityRoutes);
 app.use("/api/wallet", walletRoutes);
 app.use("/api/cards", cardRoutes);
 app.use("/api/rewards", rewardsRoutes);
-app.use("/api", notificationsRoutes);
-app.use("/api", lostItemsRoutes);
+app.use("/api/notifications", notificationsRoutes);
+app.use("/api/lost-items", lostItemsRoutes);
 app.use("/api/driver", driverRoutes);
 app.use("/api/ratings", ratingsRoutes);
-app.use("/api/stations", stationsRoutes);
+app.use("/api/ai", aiRoutes);
+app.use("/api/users", usersRoutes);
+app.use("/api/special-trips", specialTripsRoutes);
+app.use("/api/parcels", parcelsRoutes);
 
 
 const db = require("./config/db");
@@ -93,7 +107,7 @@ setInterval(async () => {
       WHERE status = 'held'
       AND hold_expires_at < NOW()
     `);
-   //console.log("Expired holds cleaned");
+    //console.log("Expired holds cleaned");
   } catch (err) {
     console.error("Cleanup job error:", err.message);
   }
