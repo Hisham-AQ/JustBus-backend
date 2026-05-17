@@ -5,7 +5,8 @@ const app = express();
 const cors = require("cors");
 
 app.use(cors({
-  origin: ["http://127.0.0.1:5174", "http://localhost:5174"],
+  //origin: ["http://127.0.0.1:5174", "http://localhost:5174"],
+  origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
@@ -27,7 +28,6 @@ const adminTripsRoutes = require("./routes/web/adminTrips.routes");
 const studentsRoutes = require("./routes/web/students.routes");
 const dashboardRoutes = require("./routes/web/dashboard.routes");
 const alertsRoutes = require("./routes/web/alerts.routes");
-const bookingsRoutes = require("./routes/web/bookings.routes");
 const stationsRoutes = require("./routes/web/stations.routes");
 
 // MOBILE ROUTES
@@ -45,6 +45,7 @@ const aiRoutes = require("./routes/mobile/ai.routes");
 const usersRoutes = require("./routes/mobile/users.routes");
 const specialTripsRoutes = require("./routes/mobile/specialTrips.routes");
 const parcelsRoutes = require("./routes/mobile/parcels.routes");
+const bookingsRoutes = require("./routes/mobile/bookings.routes");
 
 
 // ================= ROUTES =================

@@ -6,22 +6,58 @@ const authMiddleware = require("../../middleware/authMiddleware");
 
 const controller = require("../../controllers/mobile/driver.controller");
 
-router.get("/trips", authMiddleware, controller.getDriverTrips);
+router.get(
+  "/trips",
+  authMiddleware,
+  controller.getDriverTrips
+);
 
-router.get("/trips/:tripId", authMiddleware, controller.getDriverTripById);
+router.get(
+  "/trips/:tripId",
+  authMiddleware,
+  controller.getDriverTripById
+);
 
-router.patch("/start-trip", authMiddleware, controller.startTrip);
+router.patch(
+  "/start-trip",
+  authMiddleware,
+  controller.startTrip
+);
 
-router.patch("/end-trip", authMiddleware, controller.endTrip);
+router.patch(
+  "/end-trip",
+  authMiddleware,
+  controller.endTrip
+);
 
-router.post("/scan-ticket", authMiddleware, controller.scanTicket);
+router.post(
+  "/scan-ticket",
+  authMiddleware,
+  controller.scanTicket
+);
 
-router.get("/passengers", authMiddleware, controller.getPassengers);
+router.get(
+  "/passengers",
+  authMiddleware,
+  controller.getPassengers
+);
 
-router.patch("/dropoff", authMiddleware, controller.dropOffPassenger);
+router.patch(
+  "/dropoff",
+  authMiddleware,
+  controller.dropOffPassenger
+);
 
-router.post("/report-misconduct", authMiddleware, controller.reportMisconduct);
+router.post(
+  "/report-misconduct",
+  authMiddleware,
+  controller.reportMisconduct
+);
 
-router.patch("/update-location", authMiddleware, controller.updateLocation);
+router.patch(
+  "/update-location",
+  authMiddleware,
+  controller.updateLocation
+);
 
 module.exports = router;

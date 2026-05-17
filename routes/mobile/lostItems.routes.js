@@ -5,8 +5,16 @@ const authMiddleware = require("../../middleware/authMiddleware");
 
 const controller = require("../../controllers/mobile/lostItems.controller");
 
-router.post("/lost-items", authMiddleware, controller.createReport);
+router.post(
+  "/",
+  authMiddleware,
+  controller.createReport
+);
 
-router.get("/lost-items/my", authMiddleware, controller.getMyReports);
+router.get(
+  "/my",
+  authMiddleware,
+  controller.getMyReports
+);
 
 module.exports = router;
