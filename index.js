@@ -29,6 +29,11 @@ const studentsRoutes = require("./routes/web/students.routes");
 const dashboardRoutes = require("./routes/web/dashboard.routes");
 const alertsRoutes = require("./routes/web/alerts.routes");
 const stationsRoutes = require("./routes/web/stations.routes");
+const adminSpecialTripsRoutes = require("./routes/web/adminSpecialTrips.routes");
+const adminParcelsRoutes = require("./routes/web/adminParcels.routes");
+const adminTripBookingsRoutes = require("./routes/web/adminTripBookings.routes");
+const adminRewardsRoutes = require( "./routes/web/adminRewards.routes");
+const adminPointsRoutes = require( "./routes/web/adminPoints.routes");
 
 // MOBILE ROUTES
 const authRoutes = require("./routes/mobile/auth.routes");
@@ -64,6 +69,12 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/alerts", alertsRoutes);
 app.use("/api/bookings", bookingsRoutes);
 app.use("/api/stations", stationsRoutes);
+app.use("/api/admin/special-trips", adminSpecialTripsRoutes);
+app.use("/api/admin/trip-bookings", adminTripBookingsRoutes);
+app.use("/api/admin/rewards", adminRewardsRoutes);
+app.use("/api/admin/points", adminPointsRoutes);
+
+
 
 // MOBILE
 app.use("/api/trips", tripsRoutes);

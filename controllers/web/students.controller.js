@@ -18,21 +18,51 @@ exports.getStudents = async (req, res) => {
 };
 
 // ================= LEADERBOARD =================
+// ================= LEADERBOARD =================
 exports.getLeaderboard = async (req, res) => {
+
   try {
+
     const [rows] = await db.query(`
-      SELECT id, name, email
-      FROM users
-      WHERE role = 'student'
-      ORDER BY id DESC
+      SELECT
+
+        u.id,
+        u.name,
+        u.points,
+
+        COUNT(
+          CASE
+            WHEN ur.type = 'free_trip'
+            THEN 1
+          END
+        ) AS freeRides
+
+      FROM users u
+
+      LEFT JOIN user_rewards ur
+      ON u.id = ur.user_id
+
+      WHERE u.role = 'student'
+
+      GROUP BY u.id
+
+      ORDER BY u.points DESC
+
       LIMIT 10
     `);
 
     res.json(rows);
 
   } catch (err) {
-    console.error("LEADERBOARD ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+
+    console.error(
+      "GET LEADERBOARD ERROR:",
+      err
+    );
+
+    res.status(500).json({
+      message: "Server error"
+    });
   }
 };
 
@@ -43,11 +73,14 @@ exports.blacklistStudent = async (req, res) => {
     const { reason, until } = req.body;
 
     await db.query(
-      `UPDATE users 
-       SET is_blacklisted = TRUE, blacklist_reason = ?, blacklist_until = ?
-       WHERE id = ?`,
-      [reason || null, until || null, id]
-    );
+  `UPDATE users 
+   SET is_blacklisted = TRUE,
+       blacklist_reason = ?,
+       blacklist_until = ?
+   WHERE id = ?
+   AND role = 'student'`,
+  [reason || null, until || null, id]
+);
 
     res.json({ message: "Student blacklisted" });
 
@@ -59,24 +92,64 @@ exports.blacklistStudent = async (req, res) => {
 
 // ================= MANUAL BLACKLIST =================
 exports.manualBlacklist = async (req, res) => {
+
   try {
-    const { email, reason } = req.body;
+
+    const { email, reason, until } = req.body;
 
     if (!email) {
-      return res.status(400).json({ message: "Email is required" });
+
+      return res.status(400).json({
+        message: "Email is required"
+      });
+    }
+
+    const [users] = await db.query(
+      `
+      SELECT id
+      FROM users
+      WHERE email = ?
+      `,
+      [email]
+    );
+
+    if (users.length === 0) {
+
+      return res.status(404).json({
+        message: "User not found"
+      });
     }
 
     await db.query(
-      `INSERT INTO users (email, role, is_blacklisted, blacklist_reason)
-       VALUES (?, 'student', TRUE, ?)`,
-      [email, reason || null]
+      `
+      UPDATE users
+      SET
+        is_blacklisted = TRUE,
+        blacklist_reason = ?,
+        blacklist_until = ?
+      WHERE email = ?
+      `,
+      [
+        reason || null,
+        until || null,
+        email
+      ]
     );
 
-    res.json({ message: "Student manually blacklisted" });
+    res.json({
+      message: "Student manually blacklisted"
+    });
 
   } catch (err) {
-    console.error("MANUAL BLACKLIST ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+
+    console.error(
+      "MANUAL BLACKLIST ERROR:",
+      err
+    );
+
+    res.status(500).json({
+      message: "Server error"
+    });
   }
 };
 
