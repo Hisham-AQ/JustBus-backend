@@ -235,9 +235,21 @@ const login = async (req, res) => {
     }
 
     const [rows] = await db.execute(
-      "SELECT id, email, password, role FROM users WHERE email = ? AND role = ?",
-      [email, role]
-    );
+  `
+  SELECT
+    id,
+    email,
+    password,
+    role,
+    is_blacklisted,
+    blacklist_reason,
+    blacklist_until
+  FROM users
+  WHERE email = ?
+  AND role = ?
+  `,
+  [email, role]
+);
 
     if (rows.length === 0) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -245,10 +257,47 @@ const login = async (req, res) => {
 
     const user = rows[0];
 
+    // ================= AUTO REMOVE EXPIRED BLACKLIST =================
+
+if (
+  user.is_blacklisted &&
+  user.blacklist_until &&
+  new Date(user.blacklist_until) < new Date()
+) {
+
+  await db.execute(
+    `
+    UPDATE users
+    SET
+      is_blacklisted = FALSE,
+      blacklist_reason = NULL,
+      blacklist_until = NULL
+    WHERE id = ?
+    `,
+    [user.id]
+  );
+
+  // update local user object too
+  user.is_blacklisted = false;
+}
+
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
+
+        if (user.is_blacklisted) {
+
+  return res.status(403).json({
+
+    message:
+      user.blacklist_until
+      ? `Blacklisted until ${user.blacklist_until}`
+      : "Your account is blacklisted",
+
+    reason: user.blacklist_reason
+  });
+}
 
     const token = jwt.sign(
       {
@@ -259,6 +308,7 @@ const login = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN }
     );
+
 
     res.json({
       token,
