@@ -152,3 +152,37 @@ exports.verifyDelivery = async (req, res) => {
     });
   }
 };
+
+// ================= PARCEL COUNT =================
+exports.getParcelNotifications =
+  async (req, res) => {
+
+    try {
+
+      const [rows] =
+        await db.query(`
+
+          SELECT COUNT(*) AS total
+
+          FROM parcel_requests
+
+          WHERE status != 'delivered'
+
+        `);
+
+      res.json({
+        total: rows[0].total
+      });
+
+    } catch (err) {
+
+      console.error(
+        "PARCEL COUNT ERROR:",
+        err
+      );
+
+      res.status(500).json({
+        message: "Server error"
+      });
+    }
+};

@@ -72,7 +72,14 @@ exports.createDriver = async (req, res) => {
     await db.execute(
       `INSERT INTO drivers (name, phone, email, license_number, status, bus_id)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [name, phone, email || null, licenseNumber || null, status || "active", busId || null]
+      [
+  name || null,
+  phone || null,
+  email || null,
+  licenseNumber || null,
+  status || "active",
+  busId || null
+]
     );
 
     res.status(201).json({ message: "Driver created successfully" });
@@ -89,6 +96,33 @@ exports.updateDriver = async (req, res) => {
     const { id } = req.params;
     const { name, phone, email, licenseNumber, status, busId } = req.body;
 
+    // Check if bus already assigned
+
+if (busId) {
+
+  const [existing] =
+    await db.query(
+
+      `
+      SELECT id, name
+      FROM drivers
+      WHERE bus_id = ?
+      AND id != ?
+      `,
+      [busId, id]
+    );
+
+  if (existing.length > 0) {
+
+    return res.status(400).json({
+
+      message:
+        "This bus is already assigned to another driver"
+
+    });
+  }
+}
+
     // clear bus from other drivers
     if (busId) {
       await db.execute(
@@ -101,7 +135,15 @@ exports.updateDriver = async (req, res) => {
       `UPDATE drivers 
        SET name = ?, phone = ?, email = ?, license_number = ?, status = ?, bus_id = ?
        WHERE id = ?`,
-      [name, phone, email, licenseNumber, status, busId || null, id]
+      [
+  name || null,
+  phone || null,
+  email || null,
+  licenseNumber || null,
+  status || 'active',
+  busId || null,
+  id
+]
     );
 
     res.json({ message: "Driver updated successfully" });
@@ -125,4 +167,62 @@ exports.deleteDriver = async (req, res) => {
     console.error("DELETE DRIVER ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
+};
+
+// ================= DRIVER ACTIVITY =================
+exports.getDriverActivity =
+  async (req, res) => {
+
+    try {
+
+      const [rows] =
+        await db.query(`
+
+          SELECT
+
+            d.id,
+            d.name,
+            d.status,
+
+            b.plate_number,
+
+            ROUND(
+              AVG(r.driver_rating),
+              1
+            ) AS rating,
+
+            COUNT(t.id) AS tripsToday
+
+          FROM drivers d
+
+          LEFT JOIN buses b
+          ON d.bus_id = b.id
+
+          LEFT JOIN trips t
+          ON t.driver_id = d.id
+
+          LEFT JOIN ratings r
+          ON r.trip_id = t.id
+
+          GROUP BY d.id
+
+          ORDER BY tripsToday DESC
+
+          LIMIT 5
+
+        `);
+
+      res.json(rows);
+
+    } catch (err) {
+
+      console.error(
+        "DRIVER ACTIVITY ERROR:",
+        err
+      );
+
+      res.status(500).json({
+        message: "Server error"
+      });
+    }
 };

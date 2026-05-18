@@ -1,21 +1,38 @@
 const express = require("express");
+
 const router = express.Router();
 
-const authenticateToken = require("../../middleware/authMiddleware");
-const allowRoles = require("../../middleware/roleMiddleware");
+const controller =
+  require("../../controllers/web/adminDrivers.controller");
 
-const driversController = require("../../controllers/web/adminDrivers.controller");
+// Driver activity
+router.get(
+  "/activity",
+  controller.getDriverActivity
+);
 
-// GET all drivers
-router.get("/", authenticateToken, allowRoles("admin"), driversController.getDrivers);
+// Get all drivers
+router.get(
+  "/",
+  controller.getDrivers
+);
 
-// CREATE driver
-router.post("/", authenticateToken, allowRoles("admin"), driversController.createDriver);
+// Create
+router.post(
+  "/",
+  controller.createDriver
+);
 
-// UPDATE driver
-router.put("/:id", authenticateToken, allowRoles("admin"), driversController.updateDriver);
+// Update
+router.put(
+  "/:id",
+  controller.updateDriver
+);
 
-// DELETE driver
-router.delete("/:id", authenticateToken, allowRoles("admin"), driversController.deleteDriver);
+// Delete
+router.delete(
+  "/:id",
+  controller.deleteDriver
+);
 
 module.exports = router;

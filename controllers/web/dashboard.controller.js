@@ -1,38 +1,136 @@
 const db = require("../../config/db");
 
 // ================= DASHBOARD STATS =================
-exports.getStats = async (req, res) => {
-  try {
-    const [students] = await db.query(
-      "SELECT COUNT(*) AS count FROM users WHERE role = 'student'"
-    );
+exports.getDashboardStats =
+  async (req, res) => {
 
-    const [drivers] = await db.query(
-      "SELECT COUNT(*) AS count FROM drivers"
-    );
+    try {
 
-    const [trips] = await db.query(
-      "SELECT COUNT(*) AS count FROM trips"
-    );
+      // Active buses
+      const [buses] =
+        await db.query(`
+          SELECT COUNT(*) AS total
+          FROM buses
+        `);
 
-    const [buses] = await db.query(
-      "SELECT COUNT(*) AS count FROM buses"
-    );
+      // Routes
+      const [routes] =
+        await db.query(`
+          SELECT COUNT(*) AS total
+          FROM routes
+        `);
 
-    const [activeTrips] = await db.query(
-      "SELECT COUNT(*) AS count FROM trips WHERE status = 'scheduled' OR status = 'ongoing'"
-    );
+      // Students onboard
+      const [students] =
+        await db.query(`
+          SELECT COUNT(*) AS total
+          FROM users
+          WHERE role = 'student'
+        `);
 
-    res.json({
-      totalStudents: students[0].count,
-      totalDrivers: drivers[0].count,
-      totalTrips: trips[0].count,
-      totalBuses: buses[0].count,
-      activeTrips: activeTrips[0].count
-    });
+      // Pending parcels
+      const [parcels] =
+        await db.query(`
+          SELECT COUNT(*) AS total
+          FROM parcel_requests
+          WHERE status = 'pending'
+        `);
 
-  } catch (err) {
-    console.error("DASHBOARD STATS ERROR:", err);
-    res.status(500).json({ message: "Server error" });
-  }
+      res.json({
+
+        activeBuses:
+          buses[0].total,
+
+        activeRoutes:
+          routes[0].total,
+
+        studentsOnBoard:
+          students[0].total,
+
+        pendingParcels:
+          parcels[0].total
+      });
+
+    } catch (err) {
+
+      console.error(
+        "DASHBOARD STATS ERROR:",
+        err
+      );
+
+      res.status(500).json({
+        message: "Server error"
+      });
+    }
+};
+
+// ================= WEEKLY TRIPS =================
+exports.getWeeklyTrips =
+  async (req, res) => {
+
+    try {
+
+      const [rows] =
+        await db.query(`
+
+          SELECT
+
+            DAYNAME(created_at) AS day,
+
+            COUNT(*) AS trips
+
+          FROM trips
+
+          WHERE created_at >=
+            DATE_SUB(NOW(), INTERVAL 7 DAY)
+
+          GROUP BY DAYOFWEEK(created_at)
+
+          ORDER BY DAYOFWEEK(created_at)
+
+        `);
+
+      const daysOrder = [
+        'Sunday',
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday'
+      ];
+
+      const formatted =
+        daysOrder.map(day => {
+
+          const found =
+            rows.find(
+              r => r.day === day
+            );
+
+          return {
+
+            name:
+              day.slice(0, 3),
+
+            trips:
+              found
+                ? found.trips
+                : 0
+          };
+        });
+
+      res.json(formatted);
+
+    } catch (err) {
+
+      console.error(
+        "WEEKLY TRIPS ERROR:",
+        err
+      );
+
+      res.status(500).json({
+        message: "Server error"
+      });
+    }
 };

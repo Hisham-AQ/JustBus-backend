@@ -34,6 +34,7 @@ const adminParcelsRoutes = require("./routes/web/adminParcels.routes");
 const adminTripBookingsRoutes = require("./routes/web/adminTripBookings.routes");
 const adminRewardsRoutes = require( "./routes/web/adminRewards.routes");
 const adminPointsRoutes = require( "./routes/web/adminPoints.routes");
+const adminRatingsRoutes = require( "./routes/web/adminRatings.routes");
 
 // MOBILE ROUTES
 const authRoutes = require("./routes/mobile/auth.routes");
@@ -65,7 +66,7 @@ app.use("/api/buses", busesRoutes);
 app.use("/api/routes", routesRoutes);
 app.use("/api/drivers", driversRoutes);
 app.use("/api/students", studentsRoutes);
-app.use("/api/dashboard", dashboardRoutes);
+app.use('/api/dashboard', require('./routes/web/dashboard.routes'));
 app.use("/api/alerts", alertsRoutes);
 app.use("/api/bookings", bookingsRoutes);
 app.use("/api/stations", stationsRoutes);
@@ -73,6 +74,8 @@ app.use("/api/admin/special-trips", adminSpecialTripsRoutes);
 app.use("/api/admin/trip-bookings", adminTripBookingsRoutes);
 app.use("/api/admin/rewards", adminRewardsRoutes);
 app.use("/api/admin/points", adminPointsRoutes);
+app.use("/api/admin/ratings", adminRatingsRoutes);
+app.use('/api/admin/parcels', require('./routes/web/adminParcels.routes'));
 
 
 

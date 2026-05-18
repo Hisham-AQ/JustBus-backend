@@ -1,14 +1,29 @@
 const express = require("express");
+
 const router = express.Router();
 
-const authenticateToken = require("../../middleware/authMiddleware");
-const allowRoles = require("../../middleware/roleMiddleware");
-const ratingsController = require("../../controllers/mobile/userRatings.controller");
+const controller = require(
+  "../../controllers/web/adminRatings.controller"
+);
 
-//  ANALYTICS
-router.get("/analytics", authenticateToken, allowRoles("admin"), ratingsController.getAnalytics);
+router.get(
+  "/analytics",
+  controller.getAnalytics
+);
 
-// COMMENTS
-router.get("/comments", authenticateToken, allowRoles("admin"), ratingsController.getComments);
+router.get(
+  "/comments",
+  controller.getComments
+);
+
+router.get(
+  "/drivers",
+  controller.getDriverRatings
+);
+
+router.get(
+  "/drivers/:id/reviews",
+  controller.getDriverReviews
+);
 
 module.exports = router;
