@@ -36,6 +36,7 @@ const adminRewardsRoutes = require( "./routes/web/adminRewards.routes");
 const adminPointsRoutes = require( "./routes/web/adminPoints.routes");
 const adminRatingsRoutes = require( "./routes/web/adminRatings.routes");
 
+
 // MOBILE ROUTES
 const authRoutes = require("./routes/mobile/auth.routes");
 const tripsRoutes = require("./routes/mobile/userTrips.routes");
@@ -76,6 +77,9 @@ app.use("/api/admin/rewards", adminRewardsRoutes);
 app.use("/api/admin/points", adminPointsRoutes);
 app.use("/api/admin/ratings", adminRatingsRoutes);
 app.use('/api/admin/parcels', require('./routes/web/adminParcels.routes'));
+app.use( "/api/admin/wallet", require("./routes/web/adminWallet.routes"));
+app.use( "/api/admin/map", require("./routes/web/adminLiveMap.routes"));
+
 
 
 

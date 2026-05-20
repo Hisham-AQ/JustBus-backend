@@ -130,6 +130,8 @@ const [dropoffStations] = await db.query(
   [dropoffLocation]
 );
 
+let busId = null;
+
 if (driverId) {
 
   const [conflict] = await db.query(
@@ -156,6 +158,22 @@ if (driverId) {
     return res.status(400).json({
       message: "Driver already assigned to another trip at this time"
     });
+  }
+}
+
+if (driverId) {
+
+  const [drivers] = await db.query(
+    `
+    SELECT bus_id
+    FROM drivers
+    WHERE id = ?
+    `,
+    [driverId]
+  );
+
+  if (drivers.length > 0) {
+    busId = drivers[0].bus_id;
   }
 }
 
@@ -188,23 +206,7 @@ if (busId) {
   }
 }
 
-let busId = null;
 
-if (driverId) {
-
-  const [drivers] = await db.query(
-    `
-    SELECT bus_id
-    FROM drivers
-    WHERE id = ?
-    `,
-    [driverId]
-  );
-
-  if (drivers.length > 0) {
-    busId = drivers[0].bus_id;
-  }
-}
 
     await db.query(
       `INSERT INTO trips

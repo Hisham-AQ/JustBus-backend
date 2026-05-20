@@ -12,6 +12,7 @@ exports.getTripBookings = async (req, res) => {
         t.from_city,
         t.to_city,
         t.departure_time,
+        t.arrival_time,
         t.trip_date,
 
         d.name AS driverName,

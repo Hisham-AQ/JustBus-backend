@@ -4,7 +4,7 @@ const db = require("../../config/db");
 exports.getStudents = async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT id, name, email, points, phone, is_blacklisted
+      SELECT id, name, email, points, wallet_balance, phone, is_blacklisted
       FROM users
       WHERE role = 'student'
     `);
