@@ -50,21 +50,22 @@ exports.getDriverTripById = async (req, res) => {
 
         const [rows] = await db.query(
             `SELECT
-                t.id,
-                t.from_city,
-                t.to_city,
-                t.pickup_location,
-                t.dropoff_location,
-                t.trip_date,
-                t.departure_time,
-                t.arrival_time,
-                t.status,
-                t.available_seats,
-                t.price,
+    t.id,
+    t.from_city,
+    t.to_city,
+    t.pickup_location,
+    t.dropoff_location,
+    t.trip_date,
+    t.departure_time,
+    t.arrival_time,
+    t.status,
+    t.available_seats,
+    t.price,
 
-                b.bus_number,
+    b.bus_number,
 
-                d.name AS driver_name
+    d.name AS driver_name,
+    u.avatar AS driver_avatar
 
             FROM trips t
 
@@ -73,6 +74,9 @@ exports.getDriverTripById = async (req, res) => {
 
             LEFT JOIN drivers d
             ON t.driver_id = d.id
+
+            LEFT JOIN users u
+            ON d.user_id = u.id
 
             WHERE d.user_id = ?
             AND t.id = ?`,
