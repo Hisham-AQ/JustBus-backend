@@ -5,7 +5,6 @@ const authMiddleware = require("../../middleware/authMiddleware");
 
 const controller = require("../../controllers/mobile/notifications.controller");
 
-// GET notifications
 router.get("/", authMiddleware, controller.getNotifications);
 
 router.patch(

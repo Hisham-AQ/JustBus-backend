@@ -6,11 +6,28 @@ exports.getNotifications = async (req, res) => {
 
     try {
         const [rows] = await db.query(
-            `SELECT id, title, message, type, is_read, created_at
-             FROM notifications
-             WHERE is_global = 1 OR user_id = ?
-             ORDER BY created_at DESC`,
-            [userId]
+            `
+    SELECT
+        n.id,
+        n.title,
+        n.message,
+        n.type,
+        COALESCE(nu.is_read, 0) AS is_read,
+        n.created_at
+
+    FROM notifications n
+
+    LEFT JOIN notification_users nu
+        ON n.id = nu.notification_id
+        AND nu.user_id = ?
+
+    WHERE
+        (n.is_global = 1 OR n.user_id = ?)
+        AND COALESCE(nu.is_hidden, 0) = 0
+
+    ORDER BY n.created_at DESC
+    `,
+            [userId, userId]
         );
 
         res.json(rows);
@@ -21,13 +38,24 @@ exports.getNotifications = async (req, res) => {
     }
 };
 
+
+
 exports.markAsRead = async (req, res) => {
+    const userId = req.user.id;
     const { id } = req.params;
 
     try {
         await db.query(
-            "UPDATE notifications SET is_read = 1 WHERE id = ?",
-            [id]
+            `
+            INSERT INTO notification_users
+            (notification_id, user_id, is_read)
+
+            VALUES (?, ?, 1)
+
+            ON DUPLICATE KEY UPDATE
+            is_read = 1
+            `,
+            [id, userId]
         );
 
         res.json({ success: true });
@@ -38,13 +66,23 @@ exports.markAsRead = async (req, res) => {
     }
 };
 
+
 exports.deleteNotification = async (req, res) => {
+    const userId = req.user.id;
     const { id } = req.params;
 
     try {
         await db.query(
-            "DELETE FROM notifications WHERE id = ?",
-            [id]
+            `
+            INSERT INTO notification_users
+            (notification_id, user_id, is_hidden)
+
+            VALUES (?, ?, 1)
+
+            ON DUPLICATE KEY UPDATE
+            is_hidden = 1
+            `,
+            [id, userId]
         );
 
         res.json({ success: true });
