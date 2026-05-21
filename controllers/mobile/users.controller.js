@@ -8,7 +8,7 @@ exports.getProfile = async (req, res) => {
         email,
         phone,
         gender,
-        birth_date
+        birth_date,
         avatar
        FROM users
        WHERE id = ?`,
@@ -71,7 +71,7 @@ exports.updateProfile = async (req, res) => {
       fields.push("phone = ?");
       values.push(phone);
     }
-    
+
     if (avatar !== undefined) {
       fields.push("avatar = ?");
       values.push(avatar);
