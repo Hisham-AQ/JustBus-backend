@@ -22,7 +22,6 @@ const jwt = require("jsonwebtoken");
 // WEB ROUTES
 const adminRoutes = require("./routes/web/admin.routes");
 const busesRoutes = require("./routes/web/buses.routes");
-const routesRoutes = require("./routes/web/routes.routes");
 const driversRoutes = require("./routes/web/adminDrivers.routes");
 const adminTripsRoutes = require("./routes/web/adminTrips.routes");
 const studentsRoutes = require("./routes/web/students.routes");
@@ -66,7 +65,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/admin/trips", adminTripsRoutes);
 app.use("/api/buses", busesRoutes);
-app.use("/api/routes", routesRoutes);
 app.use("/api/drivers", driversRoutes);
 app.use("/api/students", studentsRoutes);
 app.use('/api/dashboard', require('./routes/web/dashboard.routes'));
