@@ -42,9 +42,23 @@ exports.getNotifications = async (req, res) => {
 
 exports.markAsRead = async (req, res) => {
     const userId = req.user.id;
-    const { id } = req.params;
+    const id = parseInt(req.params.id);
 
     try {
+
+        const [notification] = await db.query(
+            `SELECT id FROM notifications
+             WHERE id = ?
+             AND (is_global = 1 OR user_id = ?)`,
+            [id, userId]
+        );
+
+        if (notification.length === 0) {
+            return res.status(404).json({
+                message: "Notification not found"
+            });
+        }
+
         await db.query(
             `
             INSERT INTO notification_users
@@ -67,11 +81,25 @@ exports.markAsRead = async (req, res) => {
 };
 
 
-exports.deleteNotification = async (req, res) => {
+exports.hideNotification = async (req, res) => {
     const userId = req.user.id;
-    const { id } = req.params;
+    const id = parseInt(req.params.id);
 
     try {
+
+        const [notification] = await db.query(
+            `SELECT id FROM notifications
+             WHERE id = ?
+            AND (is_global = 1 OR user_id = ?)`,
+            [id, userId]
+        );
+
+        if (notification.length === 0) {
+            return res.status(404).json({
+                message: "Notification not found"
+            });
+        }
+
         await db.query(
             `
             INSERT INTO notification_users
@@ -88,7 +116,7 @@ exports.deleteNotification = async (req, res) => {
         res.json({ success: true });
 
     } catch (err) {
-        console.error("DELETE ERROR:", err);
+        console.error("HIDE ERROR:", err);
         res.status(500).json({ message: "Server error" });
     }
 };

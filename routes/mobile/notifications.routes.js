@@ -5,7 +5,11 @@ const authMiddleware = require("../../middleware/authMiddleware");
 
 const controller = require("../../controllers/mobile/notifications.controller");
 
-router.get("/", authMiddleware, controller.getNotifications);
+router.get(
+  "/",
+  authMiddleware,
+  controller.getNotifications
+);
 
 router.patch(
   "/:id/read",
@@ -16,7 +20,7 @@ router.patch(
 router.delete(
   "/:id",
   authMiddleware,
-  controller.deleteNotification
+  controller.hideNotification
 );
 
 module.exports = router;
