@@ -104,9 +104,12 @@ exports.verifyDelivery = async (req, res) => {
 
     const [rows] = await db.query(
       `
-      SELECT pin_code
-      FROM parcel_requests
-      WHERE id = ?
+ SELECT
+  pin_code,
+  user_id,
+  receiver_name
+FROM parcel_requests
+WHERE id = ?
       `,
       [id]
     );
@@ -127,6 +130,8 @@ exports.verifyDelivery = async (req, res) => {
       });
     }
 
+    
+
     await db.query(
       `
       UPDATE parcel_requests
@@ -135,6 +140,28 @@ exports.verifyDelivery = async (req, res) => {
       `,
       [id]
     );
+
+
+//auto send notifications
+    await db.query(`
+  INSERT INTO notifications
+  (
+    title,
+    message,
+    type,
+    is_global,
+    user_id
+  )
+  VALUES (?, ?, ?, 0, ?)
+`, [
+  "Parcel Delivered",
+
+  `Parcel for "${parcel.receiver_name}" has been marked as delivered.`,
+
+  "parcel",
+
+  parcel.user_id
+]);
 
     res.json({
       message: "Parcel delivered successfully"

@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const authenticateToken = require("../../middleware/authMiddleware");
+const adminOnly = require("../../middleware/adminOnly");
 
 const usersController = require("../../controllers/mobile/users.controller");
 
@@ -9,6 +10,7 @@ const usersController = require("../../controllers/mobile/users.controller");
 router.get(
   "/users",
   authenticateToken,
+  adminOnly,
   usersController.getUsers
 );
 

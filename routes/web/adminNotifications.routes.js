@@ -8,36 +8,40 @@ const authenticateToken =
 const adminOnly =
   require("../../middleware/adminOnly");
 
-const controller = require(
-  "../../controllers/web/adminSpecialTrips.controller"
-);
+const controller =
+  require("../../controllers/web/adminNotifications.controller");
 
+  // ================= GET ALL =================
 router.get(
   "/",
   authenticateToken,
   adminOnly,
-  controller.getSpecialTrips
+  controller.getAllNotifications
 );
 
+// ================= GLOBAL =================
 router.post(
-  "/",
+  "/global",
   authenticateToken,
   adminOnly,
-  controller.createSpecialTrip
+  controller.sendGlobalNotification
 );
 
-router.put(
-  "/:id",
+
+// ================= USER =================
+router.post(
+  "/user",
   authenticateToken,
   adminOnly,
-  controller.updateSpecialTrip
+  controller.sendUserNotification
 );
 
+//delete 
 router.delete(
   "/:id",
   authenticateToken,
   adminOnly,
-  controller.deleteSpecialTrip
+  controller.deleteNotification
 );
 
 module.exports = router;

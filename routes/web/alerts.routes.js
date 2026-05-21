@@ -1,9 +1,17 @@
 const express = require("express");
 const router = express.Router();
 
-const alertsController = require("../../controllers/web/alerts.controller");
+const authenticateToken =
+  require("../../middleware/authMiddleware");
+
+const alertsController =
+  require("../../controllers/web/alerts.controller");
 
 // GET alerts
-router.get("/", alertsController.getAlerts);
+router.get(
+  "/",
+  authenticateToken,
+  alertsController.getAlerts
+);
 
 module.exports = router;
