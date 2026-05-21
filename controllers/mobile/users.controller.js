@@ -9,6 +9,7 @@ exports.getProfile = async (req, res) => {
         phone,
         gender,
         birth_date
+        avatar
        FROM users
        WHERE id = ?`,
       [req.user.id]
@@ -43,9 +44,9 @@ exports.getUsers = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name, birth_date, phone } = req.body;
+    const { name, birth_date, phone, avatar } = req.body;
 
-    if (!name && !birth_date && !phone) {
+    if (!name && !birth_date && !phone && !avatar) {
       return res.status(400).json({ message: "Nothing to update" });
     }
 
@@ -69,6 +70,11 @@ exports.updateProfile = async (req, res) => {
     if (phone) {
       fields.push("phone = ?");
       values.push(phone);
+    }
+    
+    if (avatar !== undefined) {
+      fields.push("avatar = ?");
+      values.push(avatar);
     }
 
     values.push(userId);
