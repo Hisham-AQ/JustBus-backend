@@ -18,24 +18,42 @@ exports.searchTrips = async (req, res) => {
   try {
     const [rows] = await db.query(
       `
-  SELECT 
-    id,
-    from_city,
-    to_city,
-    pickup_location,
-    dropoff_location,
-    departure_time,
-    arrival_time,
-    duration_minutes,
-    price,
-    available_seats,
-    status
-    FROM trips
-    WHERE TRIM(LOWER(from_city)) = TRIM(LOWER(?))
-    AND TRIM(LOWER(to_city)) = TRIM(LOWER(?))
-    AND DATE(trip_date) = DATE(?)
-    ORDER BY departure_time
-  `,
+SELECT 
+    t.id,
+    t.from_city,
+    t.to_city,
+    t.pickup_location,
+    t.dropoff_location,
+    t.departure_time,
+    t.arrival_time,
+    t.duration_minutes,
+    t.price,
+    t.available_seats,
+    t.status,
+
+    d.name AS driver_name,
+
+    bs.bus_number,
+    bs.capacity
+
+FROM trips t
+
+LEFT JOIN drivers d
+ON t.driver_id = d.id
+
+LEFT JOIN buses bs
+ON t.bus_id = bs.id
+
+WHERE TRIM(LOWER(t.from_city)) =
+TRIM(LOWER(?))
+
+AND TRIM(LOWER(t.to_city)) =
+TRIM(LOWER(?))
+
+AND DATE(t.trip_date) = DATE(?)
+
+ORDER BY t.departure_time
+`,
       [from, to, date]
     );
     const parsed = rows.map(trip => ({

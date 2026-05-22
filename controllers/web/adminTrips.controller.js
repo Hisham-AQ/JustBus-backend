@@ -44,35 +44,35 @@ ORDER BY t.trip_date, t.departure_time
 
     // ✅ Parse JSON fields
     const parsed = rows.map(trip => {
-  let pickup = [];
-  let dropoff = [];
+      let pickup = [];
+      let dropoff = [];
 
-  // SAFE pickup parsing
-  try {
-    pickup =
-      typeof trip.pickupLocation === "string"
-        ? JSON.parse(trip.pickupLocation)
-        : trip.pickupLocation || [];
-  } catch {
-    pickup = [];
-  }
+      // SAFE pickup parsing
+      try {
+        pickup =
+          typeof trip.pickupLocation === "string"
+            ? JSON.parse(trip.pickupLocation)
+            : trip.pickupLocation || [];
+      } catch {
+        pickup = [];
+      }
 
-  // SAFE dropoff parsing
-  try {
-    dropoff =
-      typeof trip.dropoffLocation === "string"
-        ? JSON.parse(trip.dropoffLocation)
-        : trip.dropoffLocation || [];
-  } catch {
-    dropoff = [];
-  }
+      // SAFE dropoff parsing
+      try {
+        dropoff =
+          typeof trip.dropoffLocation === "string"
+            ? JSON.parse(trip.dropoffLocation)
+            : trip.dropoffLocation || [];
+      } catch {
+        dropoff = [];
+      }
 
-  return {
-    ...trip,
-    pickupLocation: pickup,
-    dropoffLocation: dropoff
-  };
-});
+      return {
+        ...trip,
+        pickupLocation: pickup,
+        dropoffLocation: dropoff
+      };
+    });
 
     res.json(parsed);
 
@@ -95,7 +95,6 @@ exports.createTrip = async (req, res) => {
       arrivalTime,
       durationMinutes,
       price,
-      availableSeats,
       tripDate,
       status,
       driverId,
@@ -103,39 +102,40 @@ exports.createTrip = async (req, res) => {
       currentLng
     } = req.body;
 
-  // ✅ Proper validation
-if (!departureTime || !tripDate || !price) {
-  return res.status(400).json({
-    message: "Missing required fields"
-  });
-}
+    if (!departureTime || !tripDate || !price) {
+      return res.status(400).json({
+        message: "Missing required fields"
+      });
+    }
 
-// Convert station IDs into full station objects
+    // Convert station IDs into full station objects
 
-const [pickupStations] = await db.query(
-  `
+    const [pickupStations] = await db.query(
+      `
   SELECT id, name, lat, lng
   FROM stations
   WHERE id IN (?)
   `,
-  [pickupLocation]
-);
+      [pickupLocation]
+    );
 
-const [dropoffStations] = await db.query(
-  `
+    const [dropoffStations] = await db.query(
+      `
   SELECT id, name, lat, lng
   FROM stations
   WHERE id IN (?)
   `,
-  [dropoffLocation]
-);
+      [dropoffLocation]
+    );
 
-let busId = null;
+    let busId = null;
+    let availableSeats = 0;
 
-if (driverId) {
 
-  const [conflict] = await db.query(
-    `
+    if (driverId) {
+
+      const [conflict] = await db.query(
+        `
     SELECT id
     FROM trips
     WHERE driver_id = ?
@@ -146,41 +146,58 @@ if (driverId) {
       OR arrival_time = ?
     )
     `,
-    [
-      driverId,
-      tripDate,
-      departureTime,
-      arrivalTime
-    ]
-  );
+        [
+          driverId,
+          tripDate,
+          departureTime,
+          arrivalTime
+        ]
+      );
 
-  if (conflict.length > 0) {
-    return res.status(400).json({
-      message: "Driver already assigned to another trip at this time"
-    });
-  }
-}
+      if (conflict.length > 0) {
+        return res.status(400).json({
+          message: "Driver already assigned to another trip at this time"
+        });
+      }
+    }
 
-if (driverId) {
+    if (driverId) {
 
-  const [drivers] = await db.query(
-    `
+      const [drivers] = await db.query(
+        `
     SELECT bus_id
     FROM drivers
     WHERE id = ?
     `,
-    [driverId]
-  );
+        [driverId]
+      );
 
-  if (drivers.length > 0) {
-    busId = drivers[0].bus_id;
-  }
-}
+      if (drivers.length > 0) {
+        busId = drivers[0].bus_id;
+      }
 
-if (busId) {
 
-  const [conflict] = await db.query(
-    `
+      if (busId) {
+
+        const [buses] = await db.query(
+          `
+    SELECT capacity
+    FROM buses
+    WHERE id = ?
+    `,
+          [busId]
+        );
+
+        if (buses.length > 0) {
+          availableSeats = buses[0].capacity;
+        }
+      }
+    }
+
+    if (busId) {
+
+      const [conflict] = await db.query(
+        `
     SELECT id
     FROM trips
     WHERE bus_id = ?
@@ -191,20 +208,20 @@ if (busId) {
       OR arrival_time = ?
     )
     `,
-    [
-      busId,
-      tripDate,
-      departureTime,
-      arrivalTime
-    ]
-  );
+        [
+          busId,
+          tripDate,
+          departureTime,
+          arrivalTime
+        ]
+      );
 
-  if (conflict.length > 0) {
-    return res.status(400).json({
-      message: "Bus already assigned to another trip at this time"
-    });
-  }
-}
+      if (conflict.length > 0) {
+        return res.status(400).json({
+          message: "Bus already assigned to another trip at this time"
+        });
+      }
+    }
 
 
 
@@ -257,7 +274,6 @@ exports.updateTrip = async (req, res) => {
       arrivalTime,
       durationMinutes,
       price,
-      availableSeats,
       tripDate,
       status,
       driverId,
@@ -266,45 +282,45 @@ exports.updateTrip = async (req, res) => {
     } = req.body;
 
     const [pickupStations] = await db.query(
-  `
+      `
   SELECT id, name, lat, lng
   FROM stations
   WHERE id IN (?)
   `,
-  [pickupLocation]
-);
+      [pickupLocation]
+    );
 
-const [dropoffStations] = await db.query(
-  `
+    const [dropoffStations] = await db.query(
+      `
   SELECT id, name, lat, lng
   FROM stations
   WHERE id IN (?)
   `,
-  [dropoffLocation]
-);
+      [dropoffLocation]
+    );
 
-let busId = null;
+    let busId = null;
 
-if (driverId) {
+    if (driverId) {
 
-  const [drivers] = await db.query(
-    `
+      const [drivers] = await db.query(
+        `
     SELECT bus_id
     FROM drivers
     WHERE id = ?
     `,
-    [driverId]
-  );
+        [driverId]
+      );
 
-  if (drivers.length > 0) {
-    busId = drivers[0].bus_id;
-  }
-}
+      if (drivers.length > 0) {
+        busId = drivers[0].bus_id;
+      }
+    }
 
-if (driverId) {
+    if (driverId) {
 
-  const [conflict] = await db.query(
-    `
+      const [conflict] = await db.query(
+        `
     SELECT id
     FROM trips
     WHERE driver_id = ?
@@ -316,26 +332,26 @@ if (driverId) {
       OR arrival_time = ?
     )
     `,
-    [
-      driverId,
-      tripDate,
-      id,
-      departureTime,
-      arrivalTime
-    ]
-  );
+        [
+          driverId,
+          tripDate,
+          id,
+          departureTime,
+          arrivalTime
+        ]
+      );
 
-  if (conflict.length > 0) {
-    return res.status(400).json({
-      message: "Driver already assigned to another trip at this time"
-    });
-  }
-}
+      if (conflict.length > 0) {
+        return res.status(400).json({
+          message: "Driver already assigned to another trip at this time"
+        });
+      }
+    }
 
-if (busId) {
+    if (busId) {
 
-  const [conflict] = await db.query(
-    `
+      const [conflict] = await db.query(
+        `
     SELECT id
     FROM trips
     WHERE bus_id = ?
@@ -347,21 +363,21 @@ if (busId) {
       OR arrival_time = ?
     )
     `,
-    [
-      busId,
-      tripDate,
-      id,
-      departureTime,
-      arrivalTime
-    ]
-  );
+        [
+          busId,
+          tripDate,
+          id,
+          departureTime,
+          arrivalTime
+        ]
+      );
 
-  if (conflict.length > 0) {
-    return res.status(400).json({
-      message: "Bus already assigned to another trip at this time"
-    });
-  }
-}
+      if (conflict.length > 0) {
+        return res.status(400).json({
+          message: "Bus already assigned to another trip at this time"
+        });
+      }
+    }
 
     await db.query(
       `UPDATE trips SET

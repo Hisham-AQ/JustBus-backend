@@ -238,6 +238,32 @@ exports.confirmBooking = async (req, res) => {
       [amount, bookingId]
     );
 
+    const [seatRows] = await conn.execute(
+      `
+  SELECT COUNT(*) AS seatCount
+  FROM booking_seats
+  WHERE booking_id = ?
+  `,
+      [bookingId]
+    );
+
+    const reservedSeats =
+      seatRows[0].seatCount;
+
+    await conn.execute(
+      `
+  UPDATE trips
+  SET available_seats =
+      available_seats - ?
+  WHERE id = ?
+  AND available_seats >= ?
+  `,
+      [
+        reservedSeats,
+        booking.trip_id
+      ]
+    );
+
     await conn.commit();
 
     res.json({

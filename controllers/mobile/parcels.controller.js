@@ -2,7 +2,6 @@ const db = require("../../config/db");
 const { io } = require("../../index");
 const crypto = require("crypto");
 
-// ================= CREATE PARCEL =================
 exports.createParcel = async (req, res) => {
   const userId = req.user.id;
 
