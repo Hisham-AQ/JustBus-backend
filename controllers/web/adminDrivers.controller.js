@@ -7,9 +7,9 @@ exports.getDrivers = async (req, res) => {
     const [rows] = await db.query(`
       SELECT 
         d.id,
-        d.name,
-        d.phone,
-        d.email,
+u.name,
+u.phone,
+u.email,
         d.license_number AS licenseNumber,
         d.status,
         d.bus_id AS busId,
@@ -23,6 +23,12 @@ exports.getDrivers = async (req, res) => {
 
       LEFT JOIN buses b
       ON d.bus_id = b.id
+
+
+      LEFT JOIN users u
+ON d.user_id = u.id
+
+
     `);
 
     const formatted = rows.map(driver => ({
@@ -36,11 +42,11 @@ exports.getDrivers = async (req, res) => {
 
       bus: driver.bus_id
         ? {
-            id: driver.bus_id,
-            plateNumber: driver.plate_number,
-            model: driver.model,
-            capacity: driver.capacity,
-          }
+          id: driver.bus_id,
+          plateNumber: driver.plate_number,
+          model: driver.model,
+          capacity: driver.capacity,
+        }
         : null
     }));
 
@@ -59,9 +65,13 @@ exports.getDrivers = async (req, res) => {
 // ================= CREATE DRIVER =================
 exports.createDriver = async (req, res) => {
   try {
-    const { name, phone, email, licenseNumber, status, busId } = req.body;
+    const {
+      userId,
+      licenseNumber,
+      status,
+      busId
+    } = req.body;
 
-    // clear bus from previous driver
     if (busId) {
       await db.execute(
         "UPDATE drivers SET bus_id = NULL WHERE bus_id = ?",
@@ -70,16 +80,22 @@ exports.createDriver = async (req, res) => {
     }
 
     await db.execute(
-      `INSERT INTO drivers (name, phone, email, license_number, status, bus_id)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `
+  INSERT INTO drivers
+  (
+    user_id,
+    license_number,
+    status,
+    bus_id
+  )
+  VALUES (?, ?, ?, ?)
+  `,
       [
-  name || null,
-  phone || null,
-  email || null,
-  licenseNumber || null,
-  status || "active",
-  busId || null
-]
+        userId,
+        licenseNumber || null,
+        status || "active",
+        busId || null
+      ]
     );
 
     res.status(201).json({ message: "Driver created successfully" });
@@ -94,36 +110,39 @@ exports.createDriver = async (req, res) => {
 exports.updateDriver = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, phone, email, licenseNumber, status, busId } = req.body;
+    const {
+      licenseNumber,
+      status,
+      busId
+    } = req.body;
 
     // Check if bus already assigned
 
-if (busId) {
+    if (busId) {
 
-  const [existing] =
-    await db.query(
+      const [existing] =
+        await db.query(
 
-      `
-      SELECT id, name
+          `
+      SELECT id
       FROM drivers
       WHERE bus_id = ?
       AND id != ?
       `,
-      [busId, id]
-    );
+          [busId, id]
+        );
 
-  if (existing.length > 0) {
+      if (existing.length > 0) {
 
-    return res.status(400).json({
+        return res.status(400).json({
 
-      message:
-        "This bus is already assigned to another driver"
+          message:
+            "This bus is already assigned to another driver"
 
-    });
-  }
-}
+        });
+      }
+    }
 
-    // clear bus from other drivers
     if (busId) {
       await db.execute(
         "UPDATE drivers SET bus_id = NULL WHERE bus_id = ? AND id != ?",
@@ -132,18 +151,20 @@ if (busId) {
     }
 
     await db.execute(
-      `UPDATE drivers 
-       SET name = ?, phone = ?, email = ?, license_number = ?, status = ?, bus_id = ?
-       WHERE id = ?`,
+      `
+  UPDATE drivers
+  SET
+    license_number = ?,
+    status = ?,
+    bus_id = ?
+  WHERE id = ?
+  `,
       [
-  name || null,
-  phone || null,
-  email || null,
-  licenseNumber || null,
-  status || 'active',
-  busId || null,
-  id
-]
+        licenseNumber || null,
+        status || 'active',
+        busId || null,
+        id
+      ]
     );
 
     res.json({ message: "Driver updated successfully" });
@@ -181,7 +202,7 @@ exports.getDriverActivity =
           SELECT
 
             d.id,
-            d.name,
+            u.name,
             d.status,
 
             b.plate_number,
@@ -197,6 +218,9 @@ exports.getDriverActivity =
 
           LEFT JOIN buses b
           ON d.bus_id = b.id
+
+          LEFT JOIN users u
+          ON d.user_id = u.id
 
           LEFT JOIN trips t
           ON t.driver_id = d.id
@@ -225,4 +249,4 @@ exports.getDriverActivity =
         message: "Server error"
       });
     }
-};
+  };
