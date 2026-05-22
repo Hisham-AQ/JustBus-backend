@@ -4,21 +4,24 @@ const db = require("../../config/db");
 exports.getBuses = async (req, res) => {
   try {
     const [rows] = await db.query(`
-  SELECT 
-    b.id,
-    b.plate_number AS plateNumber,
-    b.capacity,
-    b.status,
-    b.model,
-    b.bus_condition AS \`condition\`,
+SELECT 
+  b.id,
+  b.plate_number AS plateNumber,
+  b.capacity,
+  b.status,
+  b.model,
+  b.bus_condition AS \`condition\`,
 
-    d.id AS driverId,
-    d.name AS driverName
+  d.id AS driverId,
+  u.name AS driverName
 
-  FROM buses b
+FROM buses b
 
-  LEFT JOIN drivers d
-  ON d.bus_id = b.id
+LEFT JOIN drivers d
+ON d.bus_id = b.id
+
+LEFT JOIN users u
+ON d.user_id = u.id
 `);
 
     res.json(rows);
