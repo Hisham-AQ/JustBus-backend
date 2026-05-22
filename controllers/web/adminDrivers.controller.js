@@ -63,33 +63,93 @@ ON d.user_id = u.id
 };
 
 // ================= CREATE DRIVER =================
+const bcrypt = require("bcrypt");
+
 exports.createDriver = async (req, res) => {
+
   try {
+
     const {
-      userId,
+      name,
+      email,
+      phone,
+      password,
       licenseNumber,
       status,
       busId
     } = req.body;
 
+    // Check existing email
+    const [existing] = await db.query(
+      `
+      SELECT id
+      FROM users
+      WHERE email = ?
+      `,
+      [email]
+    );
+
+    if (existing.length > 0) {
+
+      return res.status(400).json({
+        message: "Email already exists"
+      });
+    }
+
+    // Hash password
+    const hashedPassword =
+      await bcrypt.hash(password, 10);
+
+    // Create user
+    const [userResult] =
+      await db.query(
+        `
+        INSERT INTO users
+        (
+          name,
+          email,
+          password,
+          phone,
+          role
+        )
+        VALUES (?, ?, ?, ?, 'driver')
+        `,
+        [
+          name,
+          email,
+          hashedPassword,
+          phone
+        ]
+      );
+
+    const userId =
+      userResult.insertId;
+
+    // Remove old bus assignment
     if (busId) {
+
       await db.execute(
-        "UPDATE drivers SET bus_id = NULL WHERE bus_id = ?",
+        `
+        UPDATE drivers
+        SET bus_id = NULL
+        WHERE bus_id = ?
+        `,
         [busId]
       );
     }
 
-    await db.execute(
+    // Create driver
+    await db.query(
       `
-  INSERT INTO drivers
-  (
-    user_id,
-    license_number,
-    status,
-    bus_id
-  )
-  VALUES (?, ?, ?, ?)
-  `,
+      INSERT INTO drivers
+      (
+        user_id,
+        license_number,
+        status,
+        bus_id
+      )
+      VALUES (?, ?, ?, ?)
+      `,
       [
         userId,
         licenseNumber || null,
@@ -98,11 +158,21 @@ exports.createDriver = async (req, res) => {
       ]
     );
 
-    res.status(201).json({ message: "Driver created successfully" });
+    res.status(201).json({
+      message:
+        "Driver created successfully"
+    });
 
   } catch (err) {
-    console.error("CREATE DRIVER ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+
+    console.error(
+      "CREATE DRIVER ERROR:",
+      err
+    );
+
+    res.status(500).json({
+      message: "Server error"
+    });
   }
 };
 
