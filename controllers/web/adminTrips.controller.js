@@ -23,18 +23,21 @@ exports.getTrips = async (req, res) => {
   t.status,
 
   t.driver_id AS driverId,
-  d.name AS driverName,
+u.name AS driverName,
 
-  t.bus_id AS busId,
-  b.plate_number AS busPlate,
+t.bus_id AS busId,
+b.plate_number AS busPlate,
 
-  t.current_lat AS currentLat,
-  t.current_lng AS currentLng
+t.current_lat AS currentLat,
+t.current_lng AS currentLng
 
 FROM trips t
 
 LEFT JOIN drivers d
 ON t.driver_id = d.id
+
+LEFT JOIN users u
+ON d.user_id = u.id
 
 LEFT JOIN buses b
 ON t.bus_id = b.id
@@ -377,6 +380,24 @@ exports.updateTrip = async (req, res) => {
         });
       }
     }
+
+    let availableSeats = 0;
+
+if (busId) {
+
+  const [buses] = await db.query(
+    `
+    SELECT capacity
+    FROM buses
+    WHERE id = ?
+    `,
+    [busId]
+  );
+
+  if (buses.length > 0) {
+    availableSeats = buses[0].capacity;
+  }
+}
 
     await db.query(
       `UPDATE trips SET
