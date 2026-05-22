@@ -31,9 +31,9 @@ const stationsRoutes = require("./routes/web/stations.routes");
 const adminSpecialTripsRoutes = require("./routes/web/adminSpecialTrips.routes");
 const adminParcelsRoutes = require("./routes/web/adminParcels.routes");
 const adminTripBookingsRoutes = require("./routes/web/adminTripBookings.routes");
-const adminRewardsRoutes = require( "./routes/web/adminRewards.routes");
-const adminPointsRoutes = require( "./routes/web/adminPoints.routes");
-const adminRatingsRoutes = require( "./routes/web/adminRatings.routes");
+const adminRewardsRoutes = require("./routes/web/adminRewards.routes");
+const adminPointsRoutes = require("./routes/web/adminPoints.routes");
+const adminRatingsRoutes = require("./routes/web/adminRatings.routes");
 const lostItemRoutes = require("./routes/web/adminLostItem.routes");
 const adminNotificationsRoutes = require("./routes/web/adminNotifications.routes");
 
@@ -54,7 +54,7 @@ const usersRoutes = require("./routes/mobile/users.routes");
 const specialTripsRoutes = require("./routes/mobile/specialTrips.routes");
 const parcelsRoutes = require("./routes/mobile/parcels.routes");
 const bookingsRoutes = require("./routes/mobile/bookings.routes");
-
+const panicRoutes = require("./routes/mobile/panic.routes");
 
 // ================= ROUTES =================
 
@@ -96,7 +96,7 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/special-trips", specialTripsRoutes);
 app.use("/api/parcels", parcelsRoutes);
-
+app.use("/api/panic", panicRoutes);
 
 const db = require("./config/db");
 
