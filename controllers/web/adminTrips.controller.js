@@ -42,7 +42,6 @@ ON t.bus_id = b.id
 ORDER BY t.trip_date, t.departure_time
     `);
 
-    // ✅ Parse JSON fields
     const parsed = rows.map(trip => {
       let pickup = [];
       let dropoff = [];

@@ -64,22 +64,22 @@ exports.getDriverTripById = async (req, res) => {
 
     b.bus_number,
 
-    d.name AS driver_name,
+    u.name AS driver_name,
     u.avatar AS driver_avatar
 
-            FROM trips t
+FROM trips t
 
-            LEFT JOIN buses b
-            ON t.bus_id = b.id
+LEFT JOIN buses b
+ON t.bus_id = b.id
 
-            LEFT JOIN drivers d
-            ON t.driver_id = d.id
+LEFT JOIN drivers d
+ON t.driver_id = d.id
 
-            LEFT JOIN users u
-            ON d.user_id = u.id
+LEFT JOIN users u
+ON d.user_id = u.id
 
-            WHERE d.user_id = ?
-            AND t.id = ?`,
+WHERE d.user_id = ?
+AND t.id = ?`,
 
             [userId, tripId]
         );
