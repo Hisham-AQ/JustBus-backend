@@ -26,7 +26,7 @@ exports.getLiveBuses =
 
             b.plate_number,
 
-            d.name AS driver_name
+            u.name AS driver_name
 
           FROM trips t
 
@@ -35,6 +35,9 @@ exports.getLiveBuses =
 
           LEFT JOIN drivers d
           ON t.driver_id = d.id
+
+          LEFT JOIN users u
+ON d.user_id = u.id
 
           WHERE
             t.status = 'ongoing'

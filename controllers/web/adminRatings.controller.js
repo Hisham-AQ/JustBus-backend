@@ -144,8 +144,8 @@ exports.getDriverRatings = async (req, res) => {
 
       SELECT
 
-        d.id,
-        d.name,
+  d.id,
+  u.name,
 
         COUNT(r.id) AS totalReviews,
 
@@ -171,6 +171,9 @@ exports.getDriverRatings = async (req, res) => {
 
       JOIN drivers d
       ON t.driver_id = d.id
+
+      JOIN users u
+ON d.user_id = u.id
 
       GROUP BY d.id
 

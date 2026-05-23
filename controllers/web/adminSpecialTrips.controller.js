@@ -8,7 +8,7 @@ exports.getSpecialTrips = async (req, res) => {
   SELECT
     st.*,
 
-    d.name AS driverName,
+    u.name AS driverName,
 
     b.plate_number AS busPlate
 
@@ -16,6 +16,9 @@ exports.getSpecialTrips = async (req, res) => {
 
   LEFT JOIN drivers d
   ON st.driver_id = d.id
+
+  LEFT JOIN users u
+ON d.user_id = u.id
 
   LEFT JOIN buses b
   ON st.bus_id = b.id

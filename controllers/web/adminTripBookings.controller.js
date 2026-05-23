@@ -15,7 +15,7 @@ exports.getTripBookings = async (req, res) => {
         t.arrival_time,
         t.trip_date,
 
-        d.name AS driverName,
+        u.name AS driverName,
 
         b.plate_number AS busPlate,
         b.capacity AS busCapacity,
@@ -35,6 +35,9 @@ exports.getTripBookings = async (req, res) => {
 
       LEFT JOIN drivers d
       ON t.driver_id = d.id
+
+      LEFT JOIN users u
+ON d.user_id = u.id
 
       LEFT JOIN buses b
       ON t.bus_id = b.id
