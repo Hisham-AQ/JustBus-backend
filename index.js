@@ -36,6 +36,7 @@ const adminPointsRoutes = require("./routes/web/adminPoints.routes");
 const adminRatingsRoutes = require("./routes/web/adminRatings.routes");
 const lostItemRoutes = require("./routes/web/adminLostItem.routes");
 const adminNotificationsRoutes = require("./routes/web/adminNotifications.routes");
+const adminPanicRoutes = require("./routes/web/adminPanic.routes");
 
 
 // MOBILE ROUTES
@@ -81,6 +82,8 @@ app.use("/api/admin/wallet", require("./routes/web/adminWallet.routes"));
 app.use("/api/admin/map", require("./routes/web/adminLiveMap.routes"));
 app.use("/api", lostItemRoutes);
 app.use("/api/admin/notifications", adminNotificationsRoutes);
+app.use("/api/admin/panic", adminPanicRoutes);
+
 
 // MOBILE
 app.use("/api/trips", tripsRoutes);
