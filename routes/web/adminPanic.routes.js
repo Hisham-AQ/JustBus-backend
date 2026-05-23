@@ -27,4 +27,12 @@ router.put(
   controller.resolveAlert
 );
 
+// RESOLVED ALERTS
+router.get(
+  "/history",
+  authenticateToken,
+  adminOnly,
+  controller.getResolvedAlerts
+);
+
 module.exports = router;

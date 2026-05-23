@@ -91,3 +91,62 @@ exports.resolveAlert = async (req, res) => {
     });
   }
 };
+
+// ================= RESOLVED ALERTS =================
+
+exports.getResolvedAlerts =
+  async (req, res) => {
+
+    try {
+
+      const [rows] = await db.query(`
+
+        SELECT
+
+          p.id,
+          p.issue_type,
+          p.note,
+          p.lat,
+          p.lng,
+          p.created_at,
+          p.status,
+
+          u.name AS userName,
+          u.phone AS userPhone,
+
+          t.from_city,
+          t.to_city,
+
+          b.plate_number
+
+        FROM panic_alerts p
+
+        LEFT JOIN users u
+        ON p.user_id = u.id
+
+        LEFT JOIN trips t
+        ON p.trip_id = t.id
+
+        LEFT JOIN buses b
+        ON t.bus_id = b.id
+
+        WHERE p.status = 'resolved'
+
+        ORDER BY p.created_at DESC
+
+      `);
+
+      res.json(rows);
+
+    } catch (err) {
+
+      console.error(
+        "GET RESOLVED ALERTS ERROR:",
+        err
+      );
+
+      res.status(500).json({
+        message: "Server error"
+      });
+    }
+  };
