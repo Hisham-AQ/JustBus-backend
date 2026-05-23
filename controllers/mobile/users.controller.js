@@ -46,7 +46,12 @@ exports.updateProfile = async (req, res) => {
     const userId = req.user.id;
     const { name, birth_date, phone, avatar } = req.body;
 
-    if (!name && !birth_date && !phone && !avatar) {
+    if (
+      name === undefined &&
+      birth_date === undefined &&
+      phone === undefined &&
+      avatar === undefined
+    ) {
       return res.status(400).json({ message: "Nothing to update" });
     }
 
