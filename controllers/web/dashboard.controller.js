@@ -13,13 +13,6 @@ exports.getDashboardStats =
           FROM buses
         `);
 
-      // Routes
-      const [routes] =
-        await db.query(`
-          SELECT COUNT(*) AS total
-          FROM routes
-        `);
-
       // Students onboard
       const [students] =
         await db.query(`
@@ -40,9 +33,6 @@ exports.getDashboardStats =
 
         activeBuses:
           buses[0].total,
-
-        activeRoutes:
-          routes[0].total,
 
         studentsOnBoard:
           students[0].total,
@@ -84,9 +74,12 @@ exports.getWeeklyTrips =
           WHERE created_at >=
             DATE_SUB(NOW(), INTERVAL 7 DAY)
 
-          GROUP BY DAYOFWEEK(created_at)
+GROUP BY
+  DAYOFWEEK(created_at),
+  DAYNAME(created_at)
 
-          ORDER BY DAYOFWEEK(created_at)
+ORDER BY
+  DAYOFWEEK(created_at)
 
         `);
 
