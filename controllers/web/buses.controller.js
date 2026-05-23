@@ -75,11 +75,11 @@ exports.updateBus = async (req, res) => {
        SET plate_number = ?, capacity = ?, status = ?, model = ?, bus_condition = ?
        WHERE id = ?`,
       [
-  plateNumber,
-  capacity,
-  status,
-  model,
-  condition,
+plateNumber ?? null,
+  capacity ?? null,
+  status ?? "active",
+  model ?? null,
+ condition ?? null,
   id
 ]
     );
