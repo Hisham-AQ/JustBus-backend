@@ -16,7 +16,6 @@ exports.getAlerts = async (req, res) => {
         p.lat,
         p.lng,
         p.created_at,
-        p.is_resolved,
 
         u.name AS userName,
         u.phone AS userPhone,
@@ -38,7 +37,7 @@ exports.getAlerts = async (req, res) => {
       LEFT JOIN buses b
       ON t.bus_id = b.id
 
-      WHERE p.is_resolved = 0
+      WHERE p.status = 'pending'
 
       ORDER BY p.created_at DESC
 
@@ -70,7 +69,7 @@ exports.resolveAlert = async (req, res) => {
     await db.query(
       `
       UPDATE panic_alerts
-      SET is_resolved = 1
+      SET status = 'resolved'
       WHERE id = ?
       `,
       [id]
