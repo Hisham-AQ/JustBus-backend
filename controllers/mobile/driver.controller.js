@@ -303,8 +303,6 @@ AND status = 'confirmed'
 exports.scanTicket = async (req, res) => {
     const { qrToken, tripId } = req.body;
 
-    console.log("QR RECEIVED:", qrToken);
-
     try {
 
         const bookingId = parseInt(qrToken);
@@ -365,11 +363,15 @@ exports.scanTicket = async (req, res) => {
         );
 
         const [drivers] = await db.query(
-            `SELECT id
-            FROM drivers
-           WHERE user_id = ?`,
+            `
+    SELECT id
+    FROM drivers
+    WHERE user_id = ?
+    `,
             [req.user.id]
         );
+
+        const driverId = drivers[0].id;
 
         if (drivers.length === 0) {
             return res.status(404).json({
@@ -377,7 +379,6 @@ exports.scanTicket = async (req, res) => {
             });
         }
 
-        const driverId = drivers[0].id;
         await db.query(
             `INSERT INTO scan_logs
               (booking_id, driver_id, result)
