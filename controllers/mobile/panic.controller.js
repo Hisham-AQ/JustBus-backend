@@ -40,6 +40,15 @@ exports.sendPanicAlert = async (req, res) => {
       ]
     );
 
+    const io = req.app.get("io");
+
+io.emit("alert:new", {
+  trip_id,
+  issue_type,
+  lat,
+  lng
+});
+
     res.status(201).json({
       message: "Panic alert sent successfully",
     });

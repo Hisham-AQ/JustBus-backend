@@ -75,6 +75,12 @@ exports.resolveAlert = async (req, res) => {
       [id]
     );
 
+    const io = req.app.get("io");
+
+io.emit("alert:resolved", {
+  id
+});
+
     res.json({
       message: "Alert resolved"
     });

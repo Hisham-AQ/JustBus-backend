@@ -1,6 +1,9 @@
+const http = require("http");
+const { Server } = require("socket.io");
 const express = require("express");
 require("dotenv").config();
 const app = express();
+const server = http.createServer(app);
 
 const cors = require("cors");
 
@@ -137,10 +140,6 @@ setInterval(async () => {
    START SERVER
 ========================================= */
 
-const http = require("http");
-const { Server } = require("socket.io");
-
-const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
@@ -149,6 +148,8 @@ const io = new Server(server, {
 });
 
 module.exports.io = io;
+
+app.set("io", io);
 
 io.on("connection", (socket) => {
   console.log("🟢 Client connected:", socket.id);
