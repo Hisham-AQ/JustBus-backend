@@ -31,7 +31,7 @@ SELECT
     t.available_seats,
     t.status,
 
-    d.name AS driver_name,
+    u.name AS driver_name,
 
     bs.bus_number,
     bs.capacity
@@ -40,6 +40,9 @@ FROM trips t
 
 LEFT JOIN drivers d
 ON t.driver_id = d.id
+
+LEFT JOIN users u
+ON d.user_id = u.id
 
 LEFT JOIN buses bs
 ON t.bus_id = bs.id
