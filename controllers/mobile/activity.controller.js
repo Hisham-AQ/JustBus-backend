@@ -13,6 +13,14 @@ exports.getMyActivity = async (req, res) => {
     b.status,
     b.total_price,
     bus.bus_number,
+
+      EXISTS (
+    SELECT 1
+    FROM booking_cancellation_requests r
+    WHERE r.booking_id = b.id
+    AND r.status = 'pending'
+  ) AS has_pending_cancellation,
+   
     b.qr_token,
     b.pickup_location,
     b.dropoff_location,
@@ -96,6 +104,24 @@ exports.requestCancellation = async (req, res) => {
     if (!reason) {
       return res.status(400).json({
         message: "Reason is required",
+      });
+    }
+
+    const [existing] = await db.query(
+      `
+      SELECT id
+      FROM booking_cancellation_requests
+      WHERE booking_id = ?
+      AND status = 'pending'
+      LIMIT 1
+      `,
+      [booking_id]
+    );
+
+    if (existing.length > 0) {
+      return res.status(400).json({
+        message:
+          "Cancellation request already submitted",
       });
     }
 

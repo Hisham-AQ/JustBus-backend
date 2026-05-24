@@ -105,3 +105,31 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+exports.saveFcmToken = async (
+  req,
+  res
+) => {
+  try {
+    const { token } = req.body;
+
+    await db.query(
+      `
+      UPDATE users
+      SET fcm_token = ?
+      WHERE id = ?
+      `,
+      [token, req.user.id]
+    );
+
+    res.json({
+      success: true,
+    });
+  } catch (e) {
+    console.log(e);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
