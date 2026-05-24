@@ -1,5 +1,9 @@
 const db = require("../../config/db");
 
+const {
+  sendNotificationToUser,
+} = require("../../utils/sendNotification");
+
 // ================= GET ALL PARCELS =================
 exports.getParcels = async (req, res) => {
 
@@ -142,10 +146,6 @@ WHERE id = ?
     );
 
 
-    const {
-      sendNotificationToUser,
-    } = require("../../utils/sendNotification");
-
     await sendNotificationToUser({
       userId: parcel.user_id,
 
@@ -157,7 +157,7 @@ WHERE id = ?
       type: "parcel",
     });
 
-    
+
     res.json({
       message: "Parcel delivered successfully"
     });
