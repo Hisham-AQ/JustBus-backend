@@ -12,9 +12,9 @@ router.get(
 );
 
 router.post(
-  "/request-cancellation",
-  authMiddleware,
-  requestCancellation
+    "/request-cancellation",
+    authenticateToken,
+    controller.requestCancellation
 );
 
 
