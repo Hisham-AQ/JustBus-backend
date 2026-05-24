@@ -452,6 +452,7 @@ exports.reportMisconduct = async (req, res) => {
 
     const {
         seat_number,
+        booking_id,
         passenger_name,
         category,
         severity,
