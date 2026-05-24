@@ -100,6 +100,7 @@ exports.getTripPassengers = async (req, res) => {
     const [rows] = await db.query(`
       SELECT
 
+      b.id AS booking_id
         u.id,
         u.name,
         u.email,
