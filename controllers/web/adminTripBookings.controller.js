@@ -140,3 +140,161 @@ exports.getTripPassengers = async (req, res) => {
     });
   }
 };
+
+
+// ================= CANCEL + REFUND =================
+
+exports.cancelBooking =
+  async (req, res) => {
+
+    const conn =
+      await db.getConnection();
+
+    try {
+
+      await conn.beginTransaction();
+
+      const { bookingId } =
+        req.params;
+
+      // ================= GET BOOKING =================
+
+      const [bookings] =
+        await conn.query(
+          `
+          SELECT
+
+          b.id AS booking_id,
+            b.id,
+            b.user_id,
+            b.trip_id,
+            b.total_price,
+            b.status,
+
+            t.available_seats
+
+          FROM bookings b
+
+          JOIN trips t
+          ON b.trip_id = t.id
+
+          WHERE b.id = ?
+          `,
+          [bookingId]
+        );
+
+      if (
+        bookings.length === 0
+      ) {
+
+        await conn.rollback();
+
+        return res.status(404).json({
+          message:
+            "Booking not found"
+        });
+      }
+
+      const booking =
+        bookings[0];
+
+      // already cancelled
+
+      if (
+        booking.status ===
+        "cancelled"
+      ) {
+
+        await conn.rollback();
+
+        return res.status(400).json({
+          message:
+            "Booking already cancelled"
+        });
+      }
+
+      // ================= CANCEL BOOKING =================
+
+      await conn.query(
+        `
+        UPDATE bookings
+        SET status = 'cancelled'
+        WHERE id = ?
+        `,
+        [bookingId]
+      );
+
+      // ================= REFUND WALLET =================
+
+      await conn.query(
+        `
+        UPDATE users
+        SET wallet_balance =
+          wallet_balance + ?
+        WHERE id = ?
+        `,
+        [
+          booking.total_price,
+          booking.user_id
+        ]
+      );
+
+      // ================= WALLET TRANSACTION =================
+
+      await conn.query(
+        `
+        INSERT INTO wallet_transactions
+        (
+          user_id,
+          type,
+          amount,
+          description
+        )
+        VALUES (?, ?, ?, ?)
+        `,
+        [
+          booking.user_id,
+          "refund",
+          booking.total_price,
+          "Admin cancelled booking refund"
+        ]
+      );
+
+      // ================= RESTORE SEATS =================
+
+      await conn.query(
+        `
+        UPDATE trips
+        SET available_seats =
+          available_seats + 1
+        WHERE id = ?
+        `,
+        [booking.trip_id]
+      );
+
+      await conn.commit();
+
+      res.json({
+        message:
+          "Booking cancelled and refunded"
+      });
+
+    } catch (err) {
+
+      await conn.rollback();
+
+      console.error(
+        "CANCEL BOOKING ERROR:",
+        err
+      );
+
+      res.status(500).json({
+        message:
+          "Server error"
+      });
+
+    } finally {
+
+      conn.release();
+    }
+};
