@@ -130,7 +130,7 @@ WHERE id = ?
       });
     }
 
-    
+
 
     await db.query(
       `
@@ -142,27 +142,22 @@ WHERE id = ?
     );
 
 
-//auto send notifications
-    await db.query(`
-  INSERT INTO notifications
-  (
-    title,
-    message,
-    type,
-    is_global,
-    user_id
-  )
-  VALUES (?, ?, ?, 0, ?)
-`, [
-  "Parcel Delivered",
+    const {
+      sendNotificationToUser,
+    } = require("../../utils/sendNotification");
 
-  `Parcel for "${parcel.receiver_name}" has been marked as delivered.`,
+    await sendNotificationToUser({
+      userId: parcel.user_id,
 
-  "parcel",
+      title: "Parcel Delivered",
 
-  parcel.user_id
-]);
+      message:
+        `Parcel for "${parcel.receiver_name}" has been marked as delivered.`,
 
+      type: "parcel",
+    });
+
+    
     res.json({
       message: "Parcel delivered successfully"
     });
@@ -212,4 +207,4 @@ exports.getParcelNotifications =
         message: "Server error"
       });
     }
-};
+  };

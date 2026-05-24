@@ -53,29 +53,29 @@ ON d.user_id = u.id
 
     const parsed = rows.map(trip => ({
 
-  ...trip,
+      ...trip,
 
-remainingSeats:
-  trip.busCapacity
-    ? Math.max(
+      remainingSeats:
         trip.busCapacity
-        - trip.totalBookings,
-        0
-      )
-    : null,
+          ? Math.max(
+            trip.busCapacity
+            - trip.totalBookings,
+            0
+          )
+          : null,
 
-  occupancyPercentage:
-    trip.busCapacity
-      ? Math.round(
-          (
-            trip.totalBookings
-            / trip.busCapacity
-          ) * 100
-        )
-      : 0
-}));
+      occupancyPercentage:
+        trip.busCapacity
+          ? Math.round(
+            (
+              trip.totalBookings
+              / trip.busCapacity
+            ) * 100
+          )
+          : 0
+    }));
 
-res.json(parsed);
+    res.json(parsed);
 
   } catch (err) {
 
@@ -200,49 +200,49 @@ exports.cancelBooking =
       const booking =
         bookings[0];
 
-        // ================= CHECK PAYMENT TYPE =================
+      // ================= CHECK PAYMENT TYPE =================
 
-const [paymentRows] =
-  await conn.query(
-    `
+      const [paymentRows] =
+        await conn.query(
+          `
     SELECT type
     FROM wallet_transactions
     WHERE user_id = ?
     ORDER BY id DESC
     LIMIT 1
     `,
-    [booking.user_id]
-  );
+          [booking.user_id]
+        );
 
-const paymentType =
-  paymentRows[0]?.type || "payment";
+      const paymentType =
+        paymentRows[0]?.type || "payment";
 
-        // ================= CHECK IF BOARDED =================
+      // ================= CHECK IF BOARDED =================
 
-const [seats] =
-  await conn.query(
-    `
+      const [seats] =
+        await conn.query(
+          `
     SELECT is_boarded
     FROM booking_seats
     WHERE booking_id = ?
     `,
-    [bookingId]
-  );
+          [bookingId]
+        );
 
-const boarded =
-  seats.some(
-    s => s.is_boarded
-  );
+      const boarded =
+        seats.some(
+          s => s.is_boarded
+        );
 
-if (boarded) {
+      if (boarded) {
 
-  await conn.rollback();
+        await conn.rollback();
 
-  return res.status(400).json({
-    message:
-      "Cannot refund boarded passenger"
-  });
-}
+        return res.status(400).json({
+          message:
+            "Cannot refund boarded passenger"
+        });
+      }
 
       // already cancelled
 
@@ -272,54 +272,54 @@ if (boarded) {
 
       // ================= FREE SEATS =================
 
-await conn.query(
-  `
+      await conn.query(
+        `
   DELETE FROM booking_seats
   WHERE booking_id = ?
   `,
-  [bookingId]
-);
+        [bookingId]
+      );
 
-     // ================= REFUND =================
+      // ================= REFUND =================
 
-if (paymentType === "reward") {
+      if (paymentType === "reward") {
 
-    // refund points
+        // refund points
 
-  const [rewardRows] =
-  await conn.query(
-    `
+        const [rewardRows] =
+          await conn.query(
+            `
     SELECT points_required
     FROM rewards
     WHERE type = 'free_trip'
     LIMIT 1
     `
-  );
+          );
 
-const refundPoints =
-  rewardRows[0]
-    ?.points_required || 100;
+        const refundPoints =
+          rewardRows[0]
+            ?.points_required || 100;
 
 
-  // refund points to user
+        // refund points to user
 
-await conn.query(
-  `
+        await conn.query(
+          `
   UPDATE users
   SET points = points + ?
   WHERE id = ?
   `,
-  [
-    refundPoints,
-    booking.user_id
-  ]
-);
+          [
+            refundPoints,
+            booking.user_id
+          ]
+        );
 
 
-  // points transaction
+        // points transaction
 
-  await conn.query(
-    `
+        await conn.query(
+          `
     INSERT INTO points_transactions
     (
       user_id,
@@ -328,34 +328,34 @@ await conn.query(
     )
     VALUES (?, ?, ?)
     `,
-    [
-      booking.user_id,
-      "refund",
-      refundPoints
-    ]
-  );
+          [
+            booking.user_id,
+            "refund",
+            refundPoints
+          ]
+        );
 
-} else {
+      } else {
 
-  // refund wallet money
+        // refund wallet money
 
-  await conn.query(
-    `
+        await conn.query(
+          `
     UPDATE users
     SET wallet_balance =
       wallet_balance + ?
     WHERE id = ?
     `,
-    [
-      booking.total_price,
-      booking.user_id
-    ]
-  );
+          [
+            booking.total_price,
+            booking.user_id
+          ]
+        );
 
-  // wallet transaction
+        // wallet transaction
 
-  await conn.query(
-    `
+        await conn.query(
+          `
     INSERT INTO wallet_transactions
     (
       user_id,
@@ -365,56 +365,45 @@ await conn.query(
     )
     VALUES (?, ?, ?, ?)
     `,
-    [
-      booking.user_id,
-      "refund",
-      booking.total_price,
-      "Admin cancelled booking refund"
-    ]
-  );
-}
+          [
+            booking.user_id,
+            "refund",
+            booking.total_price,
+            "Admin cancelled booking refund"
+          ]
+        );
+      }
 
-// ================= CREATE NOTIFICATION =================
-
-const refundMessage =
-  paymentType === "reward"
-
-    ? `Your reservation for trip #${booking.trip_id} was cancelled by admin. Your reward points have been refunded.`
-
-    : `Your reservation for trip #${booking.trip_id} was cancelled by admin. Refund of ${booking.total_price} JD has been added to your wallet.`;
+      // ================= CREATE NOTIFICATION =================
+      const {
+        sendNotificationToUser,
+      } = require("../../utils/sendNotification");
 
 
-const [notificationResult] =
-  await conn.query(
-    `
-    INSERT INTO notifications
-(
-  title,
-  message,
-  type,
-  is_global,
-  user_id
-)
-VALUES (?, ?, ?, ?, ?)
-    `,
-    [
-  "Trip Reservation Cancelled",
+      const refundMessage =
+        paymentType === "reward"
 
-refundMessage,
+          ? `Your reservation for trip #${booking.trip_id} was cancelled by admin. Your reward points have been refunded.`
 
-  "refund",
+          : `Your reservation for trip #${booking.trip_id} was cancelled by admin. Refund of ${booking.total_price} JD has been added to your wallet.`;
 
-  0,
 
-  booking.user_id
-]
-  );
+      await sendNotificationToUser({
+        userId: booking.user_id,
 
-  
-  // ================= LINK USER =================
+        title:
+          "Trip Reservation Cancelled",
 
-await conn.query(
-  `
+        message: refundMessage,
+
+        type: "refund",
+      });
+
+
+      // ================= LINK USER =================
+
+      await conn.query(
+        `
   INSERT INTO notification_users
   (
     notification_id,
@@ -424,13 +413,13 @@ await conn.query(
   )
   VALUES (?, ?, ?, ?)
   `,
-  [
-    notificationResult.insertId,
-    booking.user_id,
-    0,
-    0
-  ]
-);
+        [
+          notificationResult.insertId,
+          booking.user_id,
+          0,
+          0
+        ]
+      );
 
       // ================= RESTORE SEATS =================
 
@@ -469,4 +458,4 @@ await conn.query(
 
       conn.release();
     }
-};
+  };
