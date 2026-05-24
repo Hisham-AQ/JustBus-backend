@@ -144,12 +144,16 @@ exports.getLiveLocation = async (req, res) => {
   const userId = req.user.id;
   try {
 
+
+
     const [rows] = await db.query(
       `
 SELECT
     t.current_lat,
     t.current_lng,
-    t.status,
+    t.status AS trip_status,
+
+    b.status AS booking_status,
 
     b.is_boarded,
 
@@ -170,26 +174,6 @@ LIMIT 1
 `,
       [tripId, userId]
     );
-const [bookingRows] = await db.query(
-  `
-  SELECT status
-  FROM bookings
-  WHERE trip_id = ?
-  AND user_id = ?
-  LIMIT 1
-  `,
-  [tripId, req.user.id]
-);
-
-if (
-  bookingRows.length > 0 &&
-  bookingRows[0].status === 'cancelled'
-) {
-  return res.json({
-    status: 'cancelled'
-  });
-}
-    
 
     if (rows.length === 0) {
 
@@ -197,8 +181,14 @@ if (
         message: "Trip not found"
       });
     }
-
     const trip = rows[0];
+
+    if (trip.booking_status === 'cancelled') {
+      return res.json({
+        booking_status: 'cancelled'
+      });
+    }
+
     console.log("USER ID => ", userId);
     console.log("TRIP DATA => ", trip);
 
@@ -214,7 +204,7 @@ if (
           [pickupLocation]
         );
 
-        
+
 
         pickupLocation = {
           name: pickupLocation,
