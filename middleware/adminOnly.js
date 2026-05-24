@@ -8,7 +8,8 @@ module.exports = (req, res, next) => {
   }
 
   // check admin role
-  if (req.user.role !== "admin") {
+  if (req.user.role !== "admin" && req.user.role !== "officer") 
+    {
     return res.status(403).json({
       message: "Admins only"
     });

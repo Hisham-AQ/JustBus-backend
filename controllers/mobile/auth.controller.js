@@ -328,7 +328,7 @@ const adminLogin = async (req, res) => {
     }
 
     const [rows] = await db.execute(
-      "SELECT id, email, password, role FROM users WHERE email = ?",
+      "SELECT id, name, email, password, role FROM users WHERE email = ?",
       [email]
     );
 
@@ -343,7 +343,7 @@ const adminLogin = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && role !== "officer") {
       return res.status(403).json({ message: "Admins only" });
     }
 
@@ -360,6 +360,7 @@ const adminLogin = async (req, res) => {
     res.json({
       token,
       role: user.role,
+      name: user.name
     });
 
   } catch (err) {
