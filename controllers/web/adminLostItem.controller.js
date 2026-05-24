@@ -1,6 +1,9 @@
 const db = require("../../config/db");
-exports.getAllReports = async (req, res) => {
+const {
+  sendNotificationToUser,
+} = require("../../utils/sendNotification");
 
+exports.getAllReports = async (req, res) => {
     try {
 
         const [rows] = await db.query(`
@@ -69,26 +72,16 @@ const item =
   status === "claimed"
 ) {
 
-    //send notification auto
-  await db.query(`
-    INSERT INTO notifications
-    (
-      title,
-      message,
-      type,
-      is_global,
-      user_id
-    )
-    VALUES (?, ?, ?, 0, ?)
-  `, [
-    "Lost Item Update",
+await sendNotificationToUser({
+  userId: item.user_id,
 
+  title: "Lost Item Update",
+
+  message:
     `Your lost item "${item.item_name}" status was updated to "${status}".`,
 
-    "lost_item",
-
-    item.user_id
-  ]);
+  type: "lost_item",
+});
 }
 
         res.json({

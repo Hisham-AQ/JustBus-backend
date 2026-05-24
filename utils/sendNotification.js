@@ -7,20 +7,21 @@ exports.sendNotificationToUser = async ({
   message,
   type = "general",
 }) => {
+
   try {
-    console.log("SAVING NOTIFICATION");
+
     await db.query(
       `
-  INSERT INTO notifications
-  (
-    user_id,
-    title,
-    message,
-    type,
-    is_global
-  )
-  VALUES (?, ?, ?, ?, ?)
-  `,
+      INSERT INTO notifications
+      (
+        user_id,
+        title,
+        message,
+        type,
+        is_global
+      )
+      VALUES (?, ?, ?, ?, ?)
+      `,
       [
         userId,
         title,
@@ -29,8 +30,7 @@ exports.sendNotificationToUser = async ({
         0,
       ]
     );
-    console.log("NOTIFICATION SAVED");
-    // get fcm token
+
     const [users] = await db.query(
       `
       SELECT fcm_token
@@ -47,30 +47,34 @@ exports.sendNotificationToUser = async ({
 
     if (!token) return;
 
-    // send push
-    await admin.messaging().send({
-      token,
+    try {
 
-      notification: {
-        title,
-        body: message,
-      },
+      await admin.messaging().send({
+        token,
 
-      android: {
-        priority: "high",
-      },
-    });
+        notification: {
+          title,
+          body: message,
+        },
 
-    console.log(
-      "Push notification sent"
-    );
+        android: {
+          priority: "high",
+        },
+      });
+
+    } catch (e) {
+
+      console.log(
+        "FCM SEND ERROR:",
+        e.message
+      );
+    }
+
   } catch (e) {
 
-    console.log("==========");
-
-    console.log(e);
-
-    console.log("==========");
+    console.log(
+      "NOTIFICATION ERROR:",
+      e.message
+    );
   }
-
 };

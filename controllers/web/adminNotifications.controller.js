@@ -1,19 +1,23 @@
 const db = require("../../config/db");
+const {
+  sendNotificationToUser,
+} = require("../../utils/sendNotification");
 
+const admin = require("../../utils/firebase");
 
 // ================= GLOBAL =================
 exports.sendGlobalNotification =
-async (req, res) => {
+  async (req, res) => {
 
-  const {
-    title,
-    message,
-    type
-  } = req.body;
+    const {
+      title,
+      message,
+      type
+    } = req.body;
 
-  try {
+    try {
 
-    await db.query(`
+      await db.query(`
       INSERT INTO notifications
       (
         title,
@@ -23,79 +27,102 @@ async (req, res) => {
       )
       VALUES (?, ?, ?, 1)
     `, [
-      title,
-      message,
-      type
-    ]);
+        title,
+        message,
+        type
+      ]);
 
-    res.json({
-      success: true,
-      message: "Global notification sent"
-    });
+      const [users] = await db.query(`
+  SELECT fcm_token
+  FROM users
+  WHERE fcm_token IS NOT NULL
+AND fcm_token != ''
+`);
 
-  } catch (err) {
+      for (const user of users) {
 
-    console.error(err);
+        try {
 
-    res.status(500).json({
-      message: "Server error"
-    });
-  }
-};
+          await admin.messaging().send({
+            token: user.fcm_token,
+
+            notification: {
+              title,
+              body: message,
+            },
+
+            android: {
+              priority: "high",
+            },
+          });
+
+        } catch (e) {
+          console.log(e.message);
+        }
+      }
+
+
+      res.json({
+        success: true,
+        message: "Global notification sent"
+      });
+
+    } catch (err) {
+
+      console.error(err);
+
+      res.status(500).json({
+        message: "Server error"
+      });
+    }
+  };
 
 
 // ================= USER =================
 exports.sendUserNotification =
-async (req, res) => {
+  async (req, res) => {
 
-  const {
-    user_id,
-    title,
-    message,
-    type
-  } = req.body;
-
-  try {
-
-    await db.query(`
-      INSERT INTO notifications
-      (
-        title,
-        message,
-        type,
-        is_global,
-        user_id
-      )
-      VALUES (?, ?, ?, 0, ?)
-    `, [
+    const {
+      user_id,
       title,
       message,
-      type,
-      user_id
-    ]);
+      type
+    } = req.body;
 
-    res.json({
-      success: true,
-      message: "User notification sent"
-    });
+    try {
 
-  } catch (err) {
+      await sendNotificationToUser({
+        userId: user_id,
 
-    console.error(err);
+        title,
 
-    res.status(500).json({
-      message: "Server error"
-    });
-  }
-};
+        message,
+
+        type,
+      });
+
+      res.json({
+        success: true,
+        message: "User notification sent"
+      });
+
+    } catch (err) {
+
+      console.error(err);
+
+      res.status(500).json({
+        message: "Server error"
+      });
+    }
+  };
 
 // ================= GET ALL =================
 exports.getAllNotifications =
-async (req, res) => {
+  async (req, res) => {
 
-  try {
+    try {
 
-    const [rows] = await db.query(`
+      const [rows] = await db.query(`
       SELECT
         id,
         title,
@@ -109,42 +136,42 @@ async (req, res) => {
       LIMIT 100
     `);
 
-    res.json(rows);
+      res.json(rows);
 
-  } catch (err) {
+    } catch (err) {
 
-    console.error(err);
+      console.error(err);
 
-    res.status(500).json({
-      message: "Server error"
-    });
-  }
-};
+      res.status(500).json({
+        message: "Server error"
+      });
+    }
+  };
 
 
 //delete notification
 exports.deleteNotification =
-async (req, res) => {
+  async (req, res) => {
 
-  const { id } = req.params;
+    const { id } = req.params;
 
-  try {
+    try {
 
-    await db.query(`
+      await db.query(`
       DELETE FROM notifications
       WHERE id = ?
     `, [id]);
 
-    res.json({
-      success: true
-    });
+      res.json({
+        success: true
+      });
 
-  } catch (err) {
+    } catch (err) {
 
-    console.error(err);
+      console.error(err);
 
-    res.status(500).json({
-      message: "Server error"
-    });
-  }
-};
+      res.status(500).json({
+        message: "Server error"
+      });
+    }
+  };

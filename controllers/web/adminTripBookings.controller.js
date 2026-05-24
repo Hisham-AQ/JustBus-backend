@@ -400,27 +400,6 @@ exports.cancelBooking =
       });
 
 
-      // ================= LINK USER =================
-
-      await conn.query(
-        `
-  INSERT INTO notification_users
-  (
-    notification_id,
-    user_id,
-    is_read,
-    is_hidden
-  )
-  VALUES (?, ?, ?, ?)
-  `,
-        [
-          notificationResult.insertId,
-          booking.user_id,
-          0,
-          0
-        ]
-      );
-
       // ================= RESTORE SEATS =================
 
       await conn.query(

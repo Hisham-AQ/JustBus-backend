@@ -1,25 +1,6 @@
 const db = require("../../config/db");
-const {
-  sendNotificationToUser,
-} = require("../../utils/sendNotification");
-
-
-
-
 
 exports.getProfile = async (req, res) => {
-  console.log("GET PROFILE HIT");
-
-await sendNotificationToUser({
-  userId: req.user.id,
-
-  title: "JustBus",
-
-  message:
-    "Push notifications working 🚀",
-
-  type: "test",
-});
   try {
     const [rows] = await db.query(
       `SELECT 
@@ -153,32 +134,3 @@ exports.saveFcmToken = async (
   }
 };
 
-exports.testNotification =
-  async (req, res) => {
-
-    try {
-
-      await sendNotificationToUser({
-        userId: req.user.id,
-
-        title: "JustBus Test",
-
-        message:
-          "Notifications are working 🚀",
-
-        type: "test",
-      });
-
-      res.json({
-        success: true,
-      });
-
-    } catch (e) {
-
-      console.log(e);
-
-      res.status(500).json({
-        message: "error",
-      });
-    }
-  };
