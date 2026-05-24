@@ -12,7 +12,6 @@ exports.getReports = async (req, res) => {
 
     mr.id,
     mr.seat_number,
-    mr.passenger_name,
     mr.category,
     mr.severity,
     mr.description,
@@ -26,12 +25,7 @@ exports.getReports = async (req, res) => {
     du.name AS driverName,
 
     su.id AS studentId,
-
-    COALESCE(
-      su.name,
-      mr.passenger_name
-    ) AS studentName,
-
+    su.name AS studentName,
     su.email AS studentEmail
 
   FROM misconduct_reports mr
@@ -52,7 +46,8 @@ exports.getReports = async (req, res) => {
   ON b.user_id = su.id
 
   ORDER BY mr.created_at DESC
-    `);
+
+`);
 
     res.json(rows);
 
