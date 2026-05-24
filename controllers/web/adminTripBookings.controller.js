@@ -200,6 +200,33 @@ exports.cancelBooking =
       const booking =
         bookings[0];
 
+        // ================= CHECK IF BOARDED =================
+
+const [seats] =
+  await conn.query(
+    `
+    SELECT is_boarded
+    FROM booking_seats
+    WHERE booking_id = ?
+    `,
+    [bookingId]
+  );
+
+const boarded =
+  seats.some(
+    s => s.is_boarded
+  );
+
+if (boarded) {
+
+  await conn.rollback();
+
+  return res.status(400).json({
+    message:
+      "Cannot refund boarded passenger"
+  });
+}
+
       // already cancelled
 
       if (
@@ -261,6 +288,52 @@ exports.cancelBooking =
           "Admin cancelled booking refund"
         ]
       );
+
+// ================= CREATE NOTIFICATION =================
+
+const [notificationResult] =
+  await conn.query(
+    `
+    INSERT INTO notifications
+    (
+      title,
+      message,
+      type,
+      is_global
+    )
+    VALUES (?, ?, ?, ?)
+    `,
+    [
+      "Trip Reservation Cancelled",
+
+      `Your reservation for trip #${booking.trip_id} was cancelled by admin. Refund of ${booking.total_price} JD has been added to your wallet.`,
+
+      "refund",
+
+      0
+    ]
+  );
+
+  // ================= LINK USER =================
+
+await conn.query(
+  `
+  INSERT INTO notification_users
+  (
+    notification_id,
+    user_id,
+    is_read,
+    is_hidden
+  )
+  VALUES (?, ?, ?, ?)
+  `,
+  [
+    notificationResult.insertId,
+    booking.user_id,
+    0,
+    0
+  ]
+);
 
       // ================= RESTORE SEATS =================
 
