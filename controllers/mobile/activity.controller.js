@@ -12,6 +12,7 @@ exports.getMyActivity = async (req, res) => {
     b.id AS booking_id,
     b.status,
     b.total_price,
+    bus.bus_number,
     b.qr_token,
     b.pickup_location,
     b.dropoff_location,
@@ -32,6 +33,9 @@ exports.getMyActivity = async (req, res) => {
 
   JOIN trips t
   ON t.id = b.trip_id
+
+  JOIN buses bus
+ON bus.id = t.bus_id
 
   LEFT JOIN booking_seats bs
   ON bs.booking_id = b.id
@@ -80,5 +84,48 @@ exports.getMyActivity = async (req, res) => {
   } catch (err) {
     console.error("ACTIVITY ERROR:", err);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+// ================= requestCancellation =================
+exports.requestCancellation = async (req, res) => {
+  try {
+    const { booking_id, reason } = req.body;
+
+    if (!reason) {
+      return res.status(400).json({
+        message: "Reason is required",
+      });
+    }
+
+    await db.query(
+      `
+      INSERT INTO booking_cancellation_requests
+      (
+        booking_id,
+        user_id,
+        reason
+      )
+      VALUES (?, ?, ?)
+      `,
+      [
+        booking_id,
+        req.user.id,
+        reason,
+      ]
+    );
+
+    res.json({
+      success: true,
+      message:
+        "Cancellation request submitted",
+    });
+  } catch (e) {
+    console.log(e);
+
+    res.status(500).json({
+      message: "Server error",
+    });
   }
 };

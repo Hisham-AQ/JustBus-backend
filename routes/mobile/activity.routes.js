@@ -11,4 +11,11 @@ router.get(
     controller.getMyActivity
 );
 
+router.post(
+  "/request-cancellation",
+  authMiddleware,
+  requestCancellation
+);
+
+
 module.exports = router;
