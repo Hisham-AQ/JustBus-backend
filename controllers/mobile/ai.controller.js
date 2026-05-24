@@ -1,6 +1,7 @@
 const axios = require("axios");
 const db = require("../../config/db");
 
+// ================= AI =================
 exports.chat = async (req, res) => {
 
   const { message } = req.body;
