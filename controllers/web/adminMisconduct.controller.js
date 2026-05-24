@@ -8,46 +8,50 @@ exports.getReports = async (req, res) => {
 
     const [rows] = await db.query(`
 
-      SELECT
+  SELECT
 
-        mr.id,
-        mr.seat_number,
-        mr.name,
-        mr.category,
-        mr.severity,
-        mr.description,
-        mr.status,
-        mr.created_at,
+    mr.id,
+    mr.seat_number,
+    mr.passenger_name,
+    mr.category,
+    mr.severity,
+    mr.description,
+    mr.status,
+    mr.created_at,
 
-        t.from_city,
-        t.to_city,
-        t.id AS tripNumber,
+    t.id AS tripNumber,
+    t.from_city,
+    t.to_city,
 
-        du.name AS driverName,
+    du.name AS driverName,
 
-        su.id AS studentId,
-        su.name AS studentName,
-        su.email AS studentEmail
+    su.id AS studentId,
 
-      FROM misconduct_reports mr
+    COALESCE(
+      su.name,
+      mr.passenger_name
+    ) AS studentName,
 
-      LEFT JOIN trips t
-      ON mr.trip_id = t.id
+    su.email AS studentEmail
 
-      LEFT JOIN drivers d
-      ON mr.driver_id = d.id
+  FROM misconduct_reports mr
 
-      LEFT JOIN users du
-      ON d.user_id = du.id
+  LEFT JOIN trips t
+  ON mr.trip_id = t.id
 
-      LEFT JOIN bookings b
-      ON mr.booking_id = b.id
+  LEFT JOIN drivers d
+  ON mr.driver_id = d.id
 
-      LEFT JOIN users su
-      ON b.user_id = su.id
+  LEFT JOIN users du
+  ON d.user_id = du.id
 
-      ORDER BY mr.created_at DESC
+  LEFT JOIN bookings b
+  ON mr.booking_id = b.id
 
+  LEFT JOIN users su
+  ON b.user_id = su.id
+
+  ORDER BY mr.created_at DESC
     `);
 
     res.json(rows);
