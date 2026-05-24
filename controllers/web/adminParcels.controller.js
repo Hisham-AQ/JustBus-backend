@@ -144,8 +144,8 @@ WHERE id = ?
       `,
       [id]
     );
-
-
+console.log("BEFORE SEND");
+console.log("VERIFY DELIVERY START");
     await sendNotificationToUser({
       userId: parcel.user_id,
 
