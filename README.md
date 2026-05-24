@@ -131,11 +131,6 @@ The system was developed using Node.js and Express.js with a scalable RESTful AP
 - Parcel APIs
 - Rewards APIs
 
----
-
-## 👨‍💻 Developers
-- **Hisham AQ**
-- **Samer Almashny**
 
 ---
 
