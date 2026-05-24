@@ -98,34 +98,35 @@ exports.getTripPassengers = async (req, res) => {
     const { id } = req.params;
 
     const [rows] = await db.query(`
-      SELECT
+  SELECT
 
-      b.id AS booking_id
-        u.id,
-        u.name,
-        u.email,
+    b.id AS booking_id,
 
-        b.pickup_location,
-        b.dropoff_location,
-        b.status,
-        b.created_at,
+    u.id AS user_id,
+    u.name,
+    u.email,
 
-        bs.seat_number,
-        bs.is_boarded,
-        bs.is_dropped_off
+    b.pickup_location,
+    b.dropoff_location,
+    b.status,
+    b.created_at,
 
-      FROM bookings b
+    bs.seat_number,
+    bs.is_boarded,
+    bs.is_dropped_off
 
-      JOIN users u
-      ON b.user_id = u.id
+  FROM bookings b
 
-      LEFT JOIN booking_seats bs
-      ON bs.booking_id = b.id
+  JOIN users u
+  ON b.user_id = u.id
 
-      WHERE b.trip_id = ?
+  LEFT JOIN booking_seats bs
+  ON bs.booking_id = b.id
 
-      ORDER BY bs.seat_number ASC
-    `, [id]);
+  WHERE b.trip_id = ?
+
+  ORDER BY bs.seat_number ASC
+`, [id]);
 
     res.json(rows);
 
