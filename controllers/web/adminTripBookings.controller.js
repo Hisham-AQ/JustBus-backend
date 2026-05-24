@@ -295,23 +295,26 @@ const [notificationResult] =
   await conn.query(
     `
     INSERT INTO notifications
-    (
-      title,
-      message,
-      type,
-      is_global
-    )
-    VALUES (?, ?, ?, ?)
+(
+  title,
+  message,
+  type,
+  is_global,
+  user_id
+)
+VALUES (?, ?, ?, ?, ?)
     `,
     [
-      "Trip Reservation Cancelled",
+  "Trip Reservation Cancelled",
 
-      `Your reservation for trip #${booking.trip_id} was cancelled by admin. Refund of ${booking.total_price} JD has been added to your wallet.`,
+  `Your reservation for trip #${booking.trip_id} was cancelled by admin. Refund of ${booking.total_price} JD has been added to your wallet.`,
 
-      "refund",
+  "refund",
 
-      0
-    ]
+  0,
+
+  booking.user_id
+]
   );
 
   // ================= LINK USER =================
