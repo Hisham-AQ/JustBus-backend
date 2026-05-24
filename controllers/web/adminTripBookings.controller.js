@@ -200,6 +200,23 @@ exports.cancelBooking =
       const booking =
         bookings[0];
 
+        // ================= CHECK PAYMENT TYPE =================
+
+const [paymentRows] =
+  await conn.query(
+    `
+    SELECT type
+    FROM wallet_transactions
+    WHERE user_id = ?
+    ORDER BY id DESC
+    LIMIT 1
+    `,
+    [booking.user_id]
+  );
+
+const paymentType =
+  paymentRows[0]?.type || "payment";
+
         // ================= CHECK IF BOARDED =================
 
 const [seats] =
@@ -263,43 +280,109 @@ await conn.query(
   [bookingId]
 );
 
-      // ================= REFUND WALLET =================
+     // ================= REFUND =================
 
-      await conn.query(
-        `
-        UPDATE users
-        SET wallet_balance =
-          wallet_balance + ?
-        WHERE id = ?
-        `,
-        [
-          booking.total_price,
-          booking.user_id
-        ]
-      );
+if (paymentType === "reward") {
 
-      // ================= WALLET TRANSACTION =================
+    // refund points
 
-      await conn.query(
-        `
-        INSERT INTO wallet_transactions
-        (
-          user_id,
-          type,
-          amount,
-          description
-        )
-        VALUES (?, ?, ?, ?)
-        `,
-        [
-          booking.user_id,
-          "refund",
-          booking.total_price,
-          "Admin cancelled booking refund"
-        ]
-      );
+  const [rewardRows] =
+  await conn.query(
+    `
+    SELECT points_required
+    FROM rewards
+    WHERE type = 'free_trip'
+    LIMIT 1
+    `
+  );
+
+const refundPoints =
+  rewardRows[0]
+    ?.points_required || 100;
+
+
+  // refund points to user
+
+await conn.query(
+  `
+  UPDATE users
+  SET points = points + ?
+  WHERE id = ?
+  `,
+  [
+    refundPoints,
+    booking.user_id
+  ]
+);
+
+
+  // points transaction
+
+  await conn.query(
+    `
+    INSERT INTO points_transactions
+    (
+      user_id,
+      type,
+      points
+    )
+    VALUES (?, ?, ?)
+    `,
+    [
+      booking.user_id,
+      "refund",
+      refundPoints
+    ]
+  );
+
+} else {
+
+  // refund wallet money
+
+  await conn.query(
+    `
+    UPDATE users
+    SET wallet_balance =
+      wallet_balance + ?
+    WHERE id = ?
+    `,
+    [
+      booking.total_price,
+      booking.user_id
+    ]
+  );
+
+  // wallet transaction
+
+  await conn.query(
+    `
+    INSERT INTO wallet_transactions
+    (
+      user_id,
+      type,
+      amount,
+      description
+    )
+    VALUES (?, ?, ?, ?)
+    `,
+    [
+      booking.user_id,
+      "refund",
+      booking.total_price,
+      "Admin cancelled booking refund"
+    ]
+  );
+}
 
 // ================= CREATE NOTIFICATION =================
+
+const refundMessage =
+  paymentType === "reward"
+
+    ? `Your reservation for trip #${booking.trip_id} was cancelled by admin. Your reward points have been refunded.`
+
+    : `Your reservation for trip #${booking.trip_id} was cancelled by admin. Refund of ${booking.total_price} JD has been added to your wallet.`;
+
 
 const [notificationResult] =
   await conn.query(
@@ -317,7 +400,7 @@ VALUES (?, ?, ?, ?, ?)
     [
   "Trip Reservation Cancelled",
 
-  `Your reservation for trip #${booking.trip_id} was cancelled by admin. Refund of ${booking.total_price} JD has been added to your wallet.`,
+refundMessage,
 
   "refund",
 
@@ -327,6 +410,7 @@ VALUES (?, ?, ?, ?, ?)
 ]
   );
 
+  
   // ================= LINK USER =================
 
 await conn.query(

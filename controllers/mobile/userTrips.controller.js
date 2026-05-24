@@ -170,6 +170,26 @@ LIMIT 1
 `,
       [tripId, userId]
     );
+const [bookingRows] = await db.query(
+  `
+  SELECT status
+  FROM bookings
+  WHERE trip_id = ?
+  AND user_id = ?
+  LIMIT 1
+  `,
+  [tripId, req.user.id]
+);
+
+if (
+  bookingRows.length > 0 &&
+  bookingRows[0].status === 'cancelled'
+) {
+  return res.json({
+    status: 'cancelled'
+  });
+}
+    
 
     if (rows.length === 0) {
 
@@ -193,6 +213,8 @@ LIMIT 1
           "SELECT lat, lng FROM stations WHERE name = ? LIMIT 1",
           [pickupLocation]
         );
+
+        
 
         pickupLocation = {
           name: pickupLocation,
