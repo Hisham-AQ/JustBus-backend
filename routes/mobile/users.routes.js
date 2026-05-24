@@ -13,4 +13,11 @@ router.post(
   usersController.saveFcmToken
 );
 
+
+router.get(
+  "/test-notification",
+  authenticateToken,
+  usersController.testNotification
+);
+
 module.exports = router;
