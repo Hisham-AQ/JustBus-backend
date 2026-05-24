@@ -1,6 +1,8 @@
 const db = require("../../config/db");
 
-/* HOLD SEATS */
+
+
+// ================= holdSeats =================
 exports.holdSeats = async (req, res) => {
   const { tripId, pickup, dropoff, seats } = req.body;
   const userId = req.user.id;
@@ -108,6 +110,7 @@ exports.holdSeats = async (req, res) => {
 };
 
 
+// ================= confirmBooking =================
 exports.confirmBooking = async (req, res) => {
   const { bookingId, rewardCode } = req.body;
   const userId = req.user.id;

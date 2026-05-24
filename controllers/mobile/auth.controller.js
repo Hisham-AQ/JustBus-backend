@@ -3,9 +3,9 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 
-/* =========================================
-   CHANGE PASSWORD
-========================================= */
+
+
+// ================= changePassword =================
 const changePassword = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -52,9 +52,9 @@ const changePassword = async (req, res) => {
   }
 };
 
-/* =========================================
-   FORGOT PASSWORD
-========================================= */
+
+
+// ================= forgotPassword =================
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -118,9 +118,8 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-/* =========================================
-   RESET PASSWORD
-========================================= */
+
+// ================= resetPassword =================
 const resetPassword = async (req, res) => {
   try {
     const { code, newPassword } = req.body;
@@ -171,9 +170,9 @@ const resetPassword = async (req, res) => {
   }
 };
 
-/* =========================================
-   REGISTER
-========================================= */
+
+
+// ================= register =================
 const register = async (req, res) => {
   try {
     const { name, email, password, role, phone, gender, birth_date } = req.body;
@@ -221,9 +220,7 @@ const register = async (req, res) => {
 };
 
 
-/* =========================================
-   LOGIN
-========================================= */
+// ================= login =================
 const login = async (req, res) => {
   try {
     const { email, password, role } = req.body;
@@ -257,8 +254,6 @@ const login = async (req, res) => {
 
     const user = rows[0];
 
-    // ================= AUTO REMOVE EXPIRED BLACKLIST =================
-
 if (
   user.is_blacklisted &&
   user.blacklist_until &&
@@ -277,7 +272,6 @@ if (
     [user.id]
   );
 
-  // update local user object too
   user.is_blacklisted = false;
 }
 
@@ -321,9 +315,8 @@ if (
   }
 };
 
-/* =========================================
-   ADMIN LOGIN
-========================================= */
+
+// ================= adminLogin =================
 const adminLogin = async (req, res) => {
   try {
     const { email, password } = req.body;

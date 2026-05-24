@@ -1,10 +1,11 @@
 const db = require("../../config/db");
 
+
+// ================= getMyActivity =================
 exports.getMyActivity = async (req, res) => {
   const userId = req.user.id;
 
   try {
-    // Trips
     const [trips] = await db.query(
       `
   SELECT 
@@ -44,7 +45,6 @@ exports.getMyActivity = async (req, res) => {
       [userId]
     );
 
-    //  Parcels
     const [parcels] = await db.query(`
   SELECT 
     pickup_location,
@@ -59,7 +59,6 @@ exports.getMyActivity = async (req, res) => {
   ORDER BY created_at DESC
 `, [userId]);
 
-    //  Special Trips
     const [specialTrips] = await db.query(`
   SELECT 
     s.title,

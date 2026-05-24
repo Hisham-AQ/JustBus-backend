@@ -1,7 +1,9 @@
 const db = require("../../config/db");
 
-exports.getDriverTrips = async (req, res) => {
 
+
+// ================= getDriverTrips =================
+exports.getDriverTrips = async (req, res) => {
     const userId = req.user.id;
 
     try {
