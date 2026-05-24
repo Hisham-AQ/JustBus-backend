@@ -4,7 +4,22 @@ const {
 } = require("../../utils/sendNotification");
 
 
+
+
+
 exports.getProfile = async (req, res) => {
+  console.log("GET PROFILE HIT");
+
+await sendNotificationToUser({
+  userId: req.user.id,
+
+  title: "JustBus",
+
+  message:
+    "Push notifications working 🚀",
+
+  type: "test",
+});
   try {
     const [rows] = await db.query(
       `SELECT 
