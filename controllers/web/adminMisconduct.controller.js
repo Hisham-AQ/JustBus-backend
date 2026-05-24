@@ -12,7 +12,7 @@ exports.getReports = async (req, res) => {
 
         mr.id,
         mr.seat_number,
-        mr.passenger_name,
+        mr.name,
         mr.category,
         mr.severity,
         mr.description,
