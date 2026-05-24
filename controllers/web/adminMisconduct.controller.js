@@ -21,6 +21,7 @@ exports.getReports = async (req, res) => {
 
         t.from_city,
         t.to_city,
+        t.id AS tripNumber,
 
         du.name AS driverName,
 
