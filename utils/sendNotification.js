@@ -9,24 +9,26 @@ exports.sendNotificationToUser = async ({
 }) => {
   try {
     // save in database
-    await db.query(
-      `
-      INSERT INTO notifications
-      (
-        user_id,
-        title,
-        message,
-        type
-      )
-      VALUES (?, ?, ?, ?)
-      `,
-      [
-        userId,
-        title,
-        message,
-        type,
-      ]
-    );
+await db.query(
+  `
+  INSERT INTO notifications
+  (
+    user_id,
+    title,
+    message,
+    type,
+    is_global
+  )
+  VALUES (?, ?, ?, ?, ?)
+  `,
+  [
+    userId,
+    title,
+    message,
+    type,
+    0,
+  ]
+);
 
     // get fcm token
     const [users] = await db.query(
