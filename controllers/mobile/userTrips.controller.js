@@ -2,6 +2,7 @@ const db = require("../../config/db");
 const geolib = require("geolib");
 
 
+//search trips
 exports.getCities = async (req, res) => {
   const [rows] = await db.query(`
     SELECT DISTINCT from_city
@@ -81,6 +82,8 @@ ORDER BY t.departure_time
   }
 };
 
+
+//available seats
 exports.getSeats = async (req, res) => {
   const { tripId } = req.params;
 
@@ -105,6 +108,7 @@ exports.getSeats = async (req, res) => {
   });
 };
 
+//booked trips
 exports.getMyTrips = async (req, res) => {
   const userId = req.user.id;
 
@@ -132,6 +136,8 @@ exports.getMyTrips = async (req, res) => {
   }
 };
 
+
+//live location
 exports.getLiveLocation = async (req, res) => {
 
   const { tripId } = req.params;

@@ -16,6 +16,7 @@ app.use(cors({
 }));
 
 
+
 app.use(express.json());
 const authenticateToken = require("./middleware/authMiddleware");
 const axios = require("axios");
@@ -84,6 +85,7 @@ app.use("/api/admin/map", require("./routes/web/adminLiveMap.routes"));
 app.use("/api", lostItemRoutes);
 app.use("/api/admin/notifications", adminNotificationsRoutes);
 app.use("/api/admin/panic", adminPanicRoutes);
+app.use("/api/admin/misconduct", require("./routes/web/adminMisconduct.routes"));
 
 
 // MOBILE
