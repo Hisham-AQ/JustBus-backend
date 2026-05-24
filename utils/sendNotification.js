@@ -8,9 +8,9 @@ exports.sendNotificationToUser = async ({
   type = "general",
 }) => {
   try {
-    // save in database
-await db.query(
-  `
+    console.log("SAVING NOTIFICATION");
+    await db.query(
+      `
   INSERT INTO notifications
   (
     user_id,
@@ -21,15 +21,15 @@ await db.query(
   )
   VALUES (?, ?, ?, ?, ?)
   `,
-  [
-    userId,
-    title,
-    message,
-    type,
-    0,
-  ]
-);
-
+      [
+        userId,
+        title,
+        message,
+        type,
+        0,
+      ]
+    );
+    console.log("NOTIFICATION SAVED");
     // get fcm token
     const [users] = await db.query(
       `
@@ -65,9 +65,12 @@ await db.query(
       "Push notification sent"
     );
   } catch (e) {
-    console.log(
-      "FCM ERROR:",
-      e.message
-    );
+
+    console.log("==========");
+
+    console.log(e);
+
+    console.log("==========");
   }
+
 };
