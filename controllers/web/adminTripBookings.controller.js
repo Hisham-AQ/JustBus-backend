@@ -253,6 +253,16 @@ if (boarded) {
         [bookingId]
       );
 
+      // ================= FREE SEATS =================
+
+await conn.query(
+  `
+  DELETE FROM booking_seats
+  WHERE booking_id = ?
+  `,
+  [bookingId]
+);
+
       // ================= REFUND WALLET =================
 
       await conn.query(
