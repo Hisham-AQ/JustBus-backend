@@ -212,11 +212,37 @@ exports.getPassengers = async (req, res) => {
 
 exports.startTrip = async (req, res) => {
     const userId = req.user.id;
+    const { tripId } = req.body;
 
     const [drivers] = await db.query(
         `SELECT id FROM drivers WHERE user_id = ?`,
         [userId]
     );
+
+    const {
+        sendNotificationToUser,
+    } = require("../../utils/sendNotification");
+
+    const [passengers] = await db.query(`
+SELECT DISTINCT b.user_id
+FROM bookings b
+WHERE b.trip_id = ?
+AND b.status = 'confirmed'
+`, [tripId]);
+
+    for (const passenger of passengers) {
+
+        await sendNotificationToUser({
+            userId: passenger.user_id,
+
+            title: "Trip Started",
+
+            message:
+                "Driver is on the way. Please get ready for boarding 🚍",
+
+            type: "trip_start",
+        });
+    }
 
     if (drivers.length === 0) {
         return res.status(404).json({
@@ -225,7 +251,6 @@ exports.startTrip = async (req, res) => {
     }
 
     const driverId = drivers[0].id;
-    const { tripId } = req.body;
 
     try {
         await db.query(
@@ -289,6 +314,31 @@ AND status = 'confirmed'
 `,
             [tripId]
         );
+
+        const {
+            sendNotificationToUser,
+        } = require("../../utils/sendNotification");
+
+        const [boardedPassengers] = await db.query(`
+SELECT DISTINCT b.user_id
+FROM bookings b
+WHERE b.trip_id = ?
+AND b.is_boarded = 1
+`, [tripId]);
+
+        for (const passenger of boardedPassengers) {
+
+            await sendNotificationToUser({
+                userId: passenger.user_id,
+
+                title: "Trip Completed",
+
+                message:
+                    "Trip completed successfully. Hope you enjoyed the ride with JustBus ❤️",
+
+                type: "trip_complete",
+            });
+        }
 
         res.json({
             message: "Trip completed"
