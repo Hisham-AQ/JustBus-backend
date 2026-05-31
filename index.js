@@ -85,6 +85,7 @@ app.use("/api/admin/map", require("./routes/web/adminLiveMap.routes"));
 app.use("/api", lostItemRoutes);
 app.use("/api/admin/notifications", adminNotificationsRoutes);
 app.use("/api/admin/panic", adminPanicRoutes);
+app.use("/api/admin/cancellation-requests", require("./routes/web/adminCancellationRequests.routes"));
 app.use("/api/admin/misconduct", require("./routes/web/adminMisconduct.routes"));
 
 

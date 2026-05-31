@@ -28,11 +28,4 @@ router.get(
   controller.getTripPassengers
 );
 
-router.put(
-  "/cancel/:bookingId",
-  authenticateToken,
-  adminOnly,
-  controller.cancelBooking
-);
-
 module.exports = router;
