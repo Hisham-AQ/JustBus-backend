@@ -343,7 +343,7 @@ const adminLogin = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    if (user.role !== 'admin' && user.role !== "officer") {
+    if (user.role !== 'admin') {
       return res.status(403).json({ message: "Admins only" });
     }
 
