@@ -13,6 +13,13 @@ exports.getMyActivity = async (req, res) => {
     b.status,
     b.total_price,
     bus.bus_number,
+    
+    EXISTS (
+  SELECT 1
+  FROM ratings r
+  WHERE r.trip_id = t.id
+  AND r.user_id = b.user_id
+) AS has_rating,
 
       EXISTS (
     SELECT 1
