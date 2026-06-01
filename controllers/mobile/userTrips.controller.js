@@ -158,18 +158,29 @@ SELECT
     b.is_boarded,
 
     b.pickup_location,
-    b.dropoff_location
+    b.dropoff_location,
+
+    u.name AS driver_name,
+    bs.bus_number
 
 FROM bookings b
 
 JOIN trips t
 ON b.trip_id = t.id
 
+LEFT JOIN drivers d
+ON t.driver_id = d.id
+
+LEFT JOIN users u
+ON d.user_id = u.id
+
+LEFT JOIN buses bs
+ON t.bus_id = bs.id
+
 WHERE t.id = ?
 AND b.user_id = ?
+
 ORDER BY b.id DESC
-
-
 LIMIT 1
 `,
       [tripId, userId]
