@@ -10,15 +10,27 @@ app.use(helmet());
 const cors = require("cors");
 
 
+const allowedOrigins = [
+  "https://justbus-web-production.up.railway.app"
+];
+
 app.use(cors({
-  origin: [
-    "https://justbus-web-production.up.railway.app",
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://localhost:3000"
-  ],
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  origin: function (origin, callback) {
+
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.startsWith("http://localhost:") ||
+      origin.startsWith("http://127.0.0.1:")
+    ) {
+      return callback(null, true);
+    }
+
+    callback(new Error("Not allowed by CORS"));
+  },
   credentials: true
 }));
 
@@ -150,15 +162,28 @@ setInterval(async () => {
    START SERVER
 ========================================= */
 
-
 const io = new Server(server, {
   cors: {
-    origin: [
-      "https://justbus-web-production.up.railway.app",
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "http://localhost:3000"
-    ],
+    origin: (origin, callback) => {
+
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      const allowedOrigins = [
+        "https://justbus-web-production.up.railway.app"
+      ];
+
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.startsWith("http://localhost:") ||
+        origin.startsWith("http://127.0.0.1:")
+      ) {
+        return callback(null, true);
+      }
+
+      callback(new Error("Not allowed by Socket.IO CORS"));
+    },
     methods: ["GET", "POST"]
   }
 });
