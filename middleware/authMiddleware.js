@@ -8,12 +8,17 @@ module.exports = function authenticateToken(req, res, next) {
     return res.status(401).json({ message: "Access token missing" });
   }
 
-  const token = authHeader.split(" ")[1];
+if (!authHeader.startsWith("Bearer ")) {
+  return res.status(401).json({
+    message: "Invalid authorization format"
+  });
+}
+
+const token = authHeader.split(" ")[1];
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-console.log("TOKEN USER:", decoded);
 
 req.user = decoded;
 

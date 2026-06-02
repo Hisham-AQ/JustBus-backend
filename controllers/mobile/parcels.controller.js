@@ -1,5 +1,4 @@
 const db = require("../../config/db");
-const { io } = require("../../index");
 const crypto = require("crypto");
 
 exports.createParcel = async (req, res) => {

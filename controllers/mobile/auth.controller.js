@@ -2,7 +2,7 @@ const db = require("../../config/db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
-
+const { validationResult } = require("express-validator");
 
 
 // ================= changePassword =================
@@ -15,11 +15,16 @@ const changePassword = async (req, res) => {
       return res.status(400).json({ message: "Missing fields" });
     }
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({
-        message: "Password must be at least 6 characters",
-      });
-    }
+
+    const passwordRegex =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+if (!passwordRegex.test(newPassword)) {
+  return res.status(400).json({
+    message:
+      "Password must be at least 8 characters and contain uppercase, lowercase, and a number"
+  });
+}
 
     const [rows] = await db.query(
       "SELECT password FROM users WHERE id = ?",
@@ -174,8 +179,19 @@ const resetPassword = async (req, res) => {
 
 // ================= register =================
 const register = async (req, res) => {
+
+  const errors = validationResult(req);
+
+if (!errors.isEmpty()) {
+  return res.status(400).json({
+    errors: errors.array()
+  });
+}
+
   try {
-    const { name, email, password, role, phone, gender, birth_date } = req.body;
+    const { name, email, password, phone, gender, birth_date } = req.body;
+
+    const role = "student";
 
     if (!name || !email || !password || !role || !phone) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -222,6 +238,15 @@ const register = async (req, res) => {
 
 // ================= login =================
 const login = async (req, res) => {
+
+    const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      errors: errors.array()
+    });
+  }
+
   try {
     const { email, password, role } = req.body;
 
@@ -240,7 +265,9 @@ const login = async (req, res) => {
     role,
     is_blacklisted,
     blacklist_reason,
-    blacklist_until
+    blacklist_until,
+    failed_login_attempts,
+    locked_until
   FROM users
   WHERE email = ?
   AND role = ?
@@ -253,6 +280,34 @@ const login = async (req, res) => {
     }
 
     const user = rows[0];
+
+    if (
+  user.locked_until &&
+  new Date(user.locked_until) < new Date()
+) {
+  await db.execute(
+    `
+    UPDATE users
+    SET
+      failed_login_attempts = 0,
+      locked_until = NULL
+    WHERE id = ?
+    `,
+    [user.id]
+  );
+
+  user.failed_login_attempts = 0;
+  user.locked_until = null;
+}
+
+    if (
+  user.locked_until &&
+  new Date(user.locked_until) > new Date()
+) {
+  return res.status(423).json({
+    message: `Account locked until ${user.locked_until}`
+  });
+}
 
 if (
   user.is_blacklisted &&
@@ -275,10 +330,51 @@ if (
   user.is_blacklisted = false;
 }
 
-    const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
+    const isValid = await bcrypt.compare(
+  password,
+  user.password
+);
+
+if (!isValid) {
+
+  const attempts = user.failed_login_attempts + 1;
+
+  if (attempts >= 5) {
+
+    const lockedUntil = new Date(
+      Date.now() + 15 * 60 * 1000
+    );
+
+    await db.execute(
+      `
+      UPDATE users
+      SET
+        failed_login_attempts = ?,
+        locked_until = ?
+      WHERE id = ?
+      `,
+      [attempts, lockedUntil, user.id]
+    );
+
+    return res.status(423).json({
+      message:
+        "Account locked for 15 minutes due to multiple failed login attempts"
+    });
+  }
+
+  await db.execute(
+    `
+    UPDATE users
+    SET failed_login_attempts = ?
+    WHERE id = ?
+    `,
+    [attempts, user.id]
+  );
+
+  return res.status(401).json({
+    message: `Invalid credentials (${attempts}/5)`
+  });
+}
 
         if (user.is_blacklisted) {
 
@@ -293,6 +389,18 @@ if (
   });
 }
 
+
+await db.execute(
+  `
+  UPDATE users
+  SET
+    failed_login_attempts = 0,
+    locked_until = NULL
+  WHERE id = ?
+  `,
+  [user.id]
+);
+
     const token = jwt.sign(
       {
         id: user.id,
@@ -302,6 +410,8 @@ if (
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN }
     );
+
+    
 
 
     res.json({
@@ -318,6 +428,15 @@ if (
 
 // ================= adminLogin =================
 const adminLogin = async (req, res) => {
+
+    const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      errors: errors.array()
+    });
+  }
+
   try {
     const { email, password } = req.body;
 
@@ -328,7 +447,7 @@ const adminLogin = async (req, res) => {
     }
 
     const [rows] = await db.execute(
-      "SELECT id, name, email, password, role FROM users WHERE email = ?",
+      "SELECT id, name, email, password, role, failed_login_attempts, locked_until FROM users WHERE email = ?",
       [email]
     );
 
@@ -338,14 +457,95 @@ const adminLogin = async (req, res) => {
 
     const user = rows[0];
 
-    const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
+    if (
+  user.locked_until &&
+  new Date(user.locked_until) < new Date()
+) {
+  await db.execute(
+    `
+    UPDATE users
+    SET
+      failed_login_attempts = 0,
+      locked_until = NULL
+    WHERE id = ?
+    `,
+    [user.id]
+  );
+
+  user.failed_login_attempts = 0;
+  user.locked_until = null;
+}
+
+if (
+  user.locked_until &&
+  new Date(user.locked_until) > new Date()
+) {
+  return res.status(423).json({
+    message: `Account locked until ${user.locked_until}`
+  });
+}
+
+
+const isValid = await bcrypt.compare(
+  password,
+  user.password
+);
+
+if (!isValid) {
+
+  const attempts = user.failed_login_attempts + 1;
+
+  if (attempts >= 5) {
+
+    const lockedUntil = new Date(
+      Date.now() + 15 * 60 * 1000
+    );
+
+    await db.execute(
+      `
+      UPDATE users
+      SET
+        failed_login_attempts = ?,
+        locked_until = ?
+      WHERE id = ?
+      `,
+      [attempts, lockedUntil, user.id]
+    );
+
+    return res.status(423).json({
+      message:
+        "Account locked for 15 minutes due to multiple failed login attempts"
+    });
+  }
+
+  await db.execute(
+    `
+    UPDATE users
+    SET failed_login_attempts = ?
+    WHERE id = ?
+    `,
+    [attempts, user.id]
+  );
+
+  return res.status(401).json({
+    message: `Invalid credentials (${attempts}/5)`
+  });
+}
 
     if (user.role !== 'admin') {
       return res.status(403).json({ message: "Admins only" });
     }
+
+    await db.execute(
+  `
+  UPDATE users
+  SET
+    failed_login_attempts = 0,
+    locked_until = NULL
+  WHERE id = ?
+  `,
+  [user.id]
+);
 
     const token = jwt.sign(
       {
