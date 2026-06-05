@@ -12,7 +12,6 @@ const controller = require(
   "../../controllers/web/adminRewards.controller"
 );
 
-// ================= REWARDS =================
 router.get(
   "/",
   authenticateToken,
@@ -41,7 +40,6 @@ router.delete(
   controller.deleteReward
 );
 
-// ================= RULES =================
 router.get(
   "/rules",
   authenticateToken,

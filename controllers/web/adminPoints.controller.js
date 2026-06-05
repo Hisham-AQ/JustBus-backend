@@ -84,7 +84,6 @@ exports.removePoints = async (req, res) => {
       });
     }
 
-    // Get current points
     const [users] = await db.query(`
       SELECT points
       FROM users
@@ -109,7 +108,6 @@ exports.removePoints = async (req, res) => {
       });
     }
 
-    // Update user
     await db.query(`
       UPDATE users
       SET points = points - ?
@@ -151,9 +149,9 @@ exports.removePoints = async (req, res) => {
   }
 };
 
+
 // ================= GET HISTORY =================
-exports.getPointsHistory =
-async (req, res) => {
+exports.getPointsHistory = async (req, res) => {
 
   try {
 

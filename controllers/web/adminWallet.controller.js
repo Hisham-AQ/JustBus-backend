@@ -1,11 +1,10 @@
-const db =
-  require("../../config/db");
+const db = require("../../config/db");
 
-exports.getStudentWallets =
-  async (req, res) => {
+  
+// ================= getStudentWallets =================
+exports.getStudentWallets = async (req, res) => {
 
     try {
-
       const [rows] =
         await db.query(`
 
@@ -36,9 +35,9 @@ exports.getStudentWallets =
     }
 };
 
-// Update student balance
-exports.updateStudentBalance =
-  async (req, res) => {
+// ================= updateStudentBalance =================
+
+exports.updateStudentBalance = async (req, res) => {
 
     const { id } =
       req.params;

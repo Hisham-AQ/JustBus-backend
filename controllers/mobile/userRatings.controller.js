@@ -3,17 +3,14 @@ const db = require("../../config/db");
 // ================= ANALYTICS =================
 exports.getAnalytics = async (req, res) => {
   try {
-    // average rating
     const [avg] = await db.query(
       "SELECT AVG(rating) AS averageRating FROM ratings"
     );
 
-    // total ratings
     const [total] = await db.query(
       "SELECT COUNT(*) AS totalRatings FROM ratings"
     );
 
-    // distribution (1–5 stars)
     const [distribution] = await db.query(`
       SELECT rating, COUNT(*) AS count
       FROM ratings

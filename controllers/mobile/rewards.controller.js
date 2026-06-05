@@ -1,6 +1,8 @@
 const db = require("../../config/db");
 
 
+
+// ================= getRules =================
 exports.getRules = async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM reward_rules WHERE id = 1");
@@ -12,6 +14,7 @@ exports.getRules = async (req, res) => {
 };
 
 
+// ================= updateRules =================
 exports.updateRules = async (req, res) => {
   const { pointsPerTrip, bonusThreshold, reward } = req.body;
 

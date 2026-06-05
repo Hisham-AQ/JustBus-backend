@@ -1,5 +1,7 @@
 const db = require("../../config/db");
 
+
+// ================= sendPanicAlert =================
 exports.sendPanicAlert = async (req, res) => {
   try {
     const userId = req.user.id;

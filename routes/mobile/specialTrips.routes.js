@@ -9,10 +9,6 @@ router.get("/", specialTripsController.getAllSpecialTrips);
 
 router.get("/:id", specialTripsController.getSpecialTrip);
 
-router.post(
-    "/book",
-    authenticateToken,
-    specialTripsController.bookSpecialTrip
-);
+router.post("/book", authenticateToken, specialTripsController.bookSpecialTrip);
 
 module.exports = router;

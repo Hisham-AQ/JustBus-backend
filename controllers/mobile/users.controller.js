@@ -1,5 +1,7 @@
 const db = require("../../config/db");
 
+
+// ================= getProfile =================
 exports.getProfile = async (req, res) => {
   try {
     const [rows] = await db.query(
@@ -27,6 +29,8 @@ exports.getProfile = async (req, res) => {
   }
 };
 
+
+// ================= getUsers =================
 exports.getUsers = async (req, res) => {
   try {
     const [users] = await db.query(
@@ -41,6 +45,8 @@ exports.getUsers = async (req, res) => {
   }
 };
 
+
+// ================= updateProfile =================
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -106,10 +112,9 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
-exports.saveFcmToken = async (
-  req,
-  res
-) => {
+
+// ================= saveFcmToken =================
+exports.saveFcmToken = async (req, res) => {
   try {
     const { token } = req.body;
 

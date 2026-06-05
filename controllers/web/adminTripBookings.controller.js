@@ -21,8 +21,8 @@ exports.getTripBookings = async (req, res) => {
         b.capacity AS busCapacity,
 
         COUNT(
-  CASE
-    WHEN book.status IN (
+        CASE
+        WHEN book.status IN (
       'confirmed',
       'held',
       'completed'

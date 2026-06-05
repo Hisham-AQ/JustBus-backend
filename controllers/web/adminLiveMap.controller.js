@@ -1,11 +1,9 @@
-const db =
-  require("../../config/db");
+const db = require("../../config/db");
 
-exports.getLiveBuses =
-  async (req, res) => {
 
+// ================= getLiveBuses =================
+exports.getLiveBuses = async (req, res) => {
     try {
-
       const [rows] =
         await db.query(`
 

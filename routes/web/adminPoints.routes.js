@@ -12,7 +12,6 @@ const controller = require(
   "../../controllers/web/adminPoints.controller"
 );
 
-// ================= ADD =================
 router.post(
   "/add",
   authenticateToken,
@@ -20,7 +19,6 @@ router.post(
   controller.addPoints
 );
 
-// ================= REMOVE =================
 router.post(
   "/remove",
   authenticateToken,
@@ -28,7 +26,6 @@ router.post(
   controller.removePoints
 );
 
-// ================= HISTORY =================
 router.get(
   "/history/:id",
   authenticateToken,

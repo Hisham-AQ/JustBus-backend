@@ -1,8 +1,8 @@
 const db = require("../../config/db");
-const {
-  sendNotificationToUser,
-} = require("../../utils/sendNotification");
+const { sendNotificationToUser,} = require("../../utils/sendNotification");
 
+
+// ================= getAllReports =================
 exports.getAllReports = async (req, res) => {
     try {
 
@@ -34,7 +34,8 @@ exports.getAllReports = async (req, res) => {
     }
 };
 
-//update
+
+// ================= updateReportStatus =================
 exports.updateReportStatus = async (req, res) => {
 
     const { id } = req.params;

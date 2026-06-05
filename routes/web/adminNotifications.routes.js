@@ -11,7 +11,6 @@ const adminOnly =
 const controller =
   require("../../controllers/web/adminNotifications.controller");
 
-  // ================= GET ALL =================
 router.get(
   "/",
   authenticateToken,
@@ -19,7 +18,6 @@ router.get(
   controller.getAllNotifications
 );
 
-// ================= GLOBAL =================
 router.post(
   "/global",
   authenticateToken,
@@ -28,7 +26,6 @@ router.post(
 );
 
 
-// ================= USER =================
 router.post(
   "/user",
   authenticateToken,
@@ -36,7 +33,6 @@ router.post(
   controller.sendUserNotification
 );
 
-//delete 
 router.delete(
   "/:id",
   authenticateToken,

@@ -1,6 +1,7 @@
 const db = require("../../config/db");
 
-// GET all stations
+
+// ================= getStations =================
 exports.getStations = async (req, res) => {
   try {
     const [rows] = await db.query(`

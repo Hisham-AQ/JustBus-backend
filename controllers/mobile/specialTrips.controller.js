@@ -1,6 +1,8 @@
 const db = require("../../config/db");
 
-/* GET ALL */
+
+
+// ================= bookSpecialTrip =================
 exports.bookSpecialTrip = async (req, res) => {
   const userId = req.user.id;
   const { tripId } = req.body;
@@ -132,6 +134,8 @@ exports.bookSpecialTrip = async (req, res) => {
   }
 };
 
+
+// ================= getAllSpecialTrips =================
 exports.getAllSpecialTrips = async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM SpecialTrip");
@@ -142,6 +146,8 @@ exports.getAllSpecialTrips = async (req, res) => {
   }
 };
 
+
+// ================= getSpecialTrip =================
 exports.getSpecialTrip = async (req, res) => {
   const { id } = req.params;
 

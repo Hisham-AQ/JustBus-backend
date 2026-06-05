@@ -7,10 +7,6 @@ const usersController = require("../../controllers/mobile/users.controller");
 router.get("/profile", authenticateToken, usersController.getProfile);
 router.put("/profile", authenticateToken, usersController.updateProfile);
 
-router.post(
-  "/save-fcm-token",
-  authenticateToken,
-  usersController.saveFcmToken
-);
+router.post("/save-fcm-token", authenticateToken, usersController.saveFcmToken);
 
 module.exports = router;

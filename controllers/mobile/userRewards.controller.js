@@ -1,6 +1,7 @@
 const db = require("../../config/db");
 
 
+// ================= redeemReward =================
 exports.redeemReward = async (req, res) => {
     const userId = req.user.id;
     const { type } = req.body;
@@ -71,6 +72,8 @@ exports.redeemReward = async (req, res) => {
     }
 };
 
+
+// ================= getPoints =================
 exports.getPoints = async (req, res) => {
     const userId = req.user.id;
 
@@ -82,6 +85,8 @@ exports.getPoints = async (req, res) => {
     res.json({ points: rows[0]?.points || 0 });
 };
 
+
+// ================= validateReward =================
 exports.validateReward = async (req, res) => {
     const userId = req.user.id;
     const { code } = req.body;

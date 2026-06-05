@@ -118,7 +118,7 @@ if (driver_id) {
         image_url,
         category,
         seats_total,
-seats_available,
+        seats_available,
         departure_time,
         return_time,
         pickup_points,
@@ -255,8 +255,8 @@ if (drivers.length > 0) {
         duration,
         image_url,
         category,
-bus_capacity,
-finalSeatsAvailable,
+        bus_capacity,
+        finalSeatsAvailable,
         departure_time,
         return_time,
         JSON.stringify(pickup_points || []),
@@ -285,7 +285,7 @@ finalSeatsAvailable,
   }
 };
 
-// ================= DELETE =================
+// ================= deleteSpecialTrip =================
 exports.deleteSpecialTrip = async (req, res) => {
 
   try {

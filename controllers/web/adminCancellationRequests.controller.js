@@ -1,7 +1,7 @@
 const db = require("../../config/db");
 
 
-// get requests
+// ================= getCancellationRequests =================
 exports.getCancellationRequests = async (req, res) => {
   try {
 
@@ -53,7 +53,7 @@ exports.getCancellationRequests = async (req, res) => {
 };
 
 
-//approve request
+// ================= approveRequest =================
 exports.approveRequest = async (req, res) => {
 
   const conn = await db.getConnection();
@@ -63,8 +63,6 @@ exports.approveRequest = async (req, res) => {
     await conn.beginTransaction();
 
     const { id } = req.params;
-
-    // ================= GET REQUEST =================
 
     const [requests] = await conn.query(
       `
@@ -87,8 +85,6 @@ exports.approveRequest = async (req, res) => {
     const bookingId =
       requests[0].booking_id;
 
-    // ================= MARK REQUEST APPROVED =================
-
     await conn.query(
       `
       UPDATE booking_cancellation_requests
@@ -97,8 +93,6 @@ exports.approveRequest = async (req, res) => {
       `,
       [id]
     );
-
-    // ================= GET BOOKING =================
 
     const [bookings] =
       await conn.query(
@@ -135,7 +129,6 @@ exports.approveRequest = async (req, res) => {
     const booking =
       bookings[0];
 
-    // already cancelled
 
     if (
       booking.status ===
@@ -150,7 +143,6 @@ exports.approveRequest = async (req, res) => {
       });
     }
 
-    // ================= CHECK PAYMENT TYPE =================
 
     const [paymentRows] =
       await conn.query(
@@ -167,8 +159,6 @@ exports.approveRequest = async (req, res) => {
     const paymentType =
       paymentRows[0]?.type ||
       "payment";
-
-    // ================= CHECK BOARDED =================
 
     const [seats] =
       await conn.query(
@@ -195,8 +185,6 @@ exports.approveRequest = async (req, res) => {
       });
     }
 
-    // ================= CANCEL BOOKING =================
-
     await conn.query(
       `
       UPDATE bookings
@@ -206,8 +194,6 @@ exports.approveRequest = async (req, res) => {
       [bookingId]
     );
 
-    // ================= FREE SEATS =================
-
     await conn.query(
       `
       DELETE FROM booking_seats
@@ -215,8 +201,6 @@ exports.approveRequest = async (req, res) => {
       `,
       [bookingId]
     );
-
-    // ================= REFUND =================
 
     if (paymentType === "reward") {
 
@@ -298,7 +282,6 @@ exports.approveRequest = async (req, res) => {
       );
     }
 
-    // ================= NOTIFICATION =================
 
     const {
       sendNotificationToUser
@@ -312,7 +295,6 @@ exports.approveRequest = async (req, res) => {
       type: "refund"
     });
 
-    // ================= RESTORE SEAT =================
 
     await conn.query(
       `
@@ -347,7 +329,8 @@ exports.approveRequest = async (req, res) => {
   }
 };
 
-//reject request
+
+// ================= rejectRequest =================
 exports.rejectRequest = async (req, res) => {
 
   try {

@@ -1,6 +1,7 @@
 const db = require("../../config/db");
 
 
+// ================= getNotifications =================
 exports.getNotifications = async (req, res) => {
     const userId = req.user.id;
 
@@ -39,7 +40,7 @@ exports.getNotifications = async (req, res) => {
 };
 
 
-
+// ================= markAsRead =================
 exports.markAsRead = async (req, res) => {
     const userId = req.user.id;
     const id = parseInt(req.params.id);
@@ -81,6 +82,7 @@ exports.markAsRead = async (req, res) => {
 };
 
 
+// ================= hideNotification =================
 exports.hideNotification = async (req, res) => {
     const userId = req.user.id;
     const id = parseInt(req.params.id);

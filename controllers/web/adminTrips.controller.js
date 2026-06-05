@@ -49,7 +49,6 @@ ORDER BY t.trip_date, t.departure_time
       let pickup = [];
       let dropoff = [];
 
-      // SAFE pickup parsing
       try {
         pickup =
           typeof trip.pickupLocation === "string"
@@ -109,8 +108,6 @@ exports.createTrip = async (req, res) => {
         message: "Missing required fields"
       });
     }
-
-    // Convert station IDs into full station objects
 
     const [pickupStations] = await db.query(
       `

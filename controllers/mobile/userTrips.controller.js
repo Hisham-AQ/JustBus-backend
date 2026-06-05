@@ -2,7 +2,7 @@ const db = require("../../config/db");
 const geolib = require("geolib");
 
 
-//search trips
+// ================= getCities =================
 exports.getCities = async (req, res) => {
   const [rows] = await db.query(`
     SELECT DISTINCT from_city
@@ -13,13 +13,15 @@ exports.getCities = async (req, res) => {
   res.json(rows);
 };
 
+
+// ================= searchTrips =================
 exports.searchTrips = async (req, res) => {
   const { from, to, date } = req.query;
 
   try {
     const [rows] = await db.query(
       `
-SELECT 
+    SELECT 
     t.id,
     t.from_city,
     t.to_city,
@@ -83,7 +85,7 @@ ORDER BY t.departure_time
 };
 
 
-//available seats
+// ================= getSeats =================
 exports.getSeats = async (req, res) => {
   const { tripId } = req.params;
 
@@ -108,7 +110,7 @@ exports.getSeats = async (req, res) => {
   });
 };
 
-//booked trips
+// ================= getMyTrips =================
 exports.getMyTrips = async (req, res) => {
   const userId = req.user.id;
 
@@ -137,7 +139,7 @@ exports.getMyTrips = async (req, res) => {
 };
 
 
-//live location
+// ================= getLiveLocation =================
 exports.getLiveLocation = async (req, res) => {
 
   const { tripId } = req.params;

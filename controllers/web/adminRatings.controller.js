@@ -5,7 +5,6 @@ exports.getAnalytics = async (req, res) => {
 
   try {
 
-    // Averages
     const [avg] = await db.query(`
       SELECT
         AVG(driver_rating) AS avgDriver,
@@ -15,7 +14,6 @@ exports.getAnalytics = async (req, res) => {
       FROM ratings
     `);
 
-    // Distribution
     const [distribution] = await db.query(`
       SELECT
         driver_rating AS rating,
@@ -25,7 +23,6 @@ exports.getAnalytics = async (req, res) => {
       ORDER BY driver_rating
     `);
 
-    // Latest comments
     const [recentComments] = await db.query(`
       SELECT
         r.id,

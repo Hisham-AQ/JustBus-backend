@@ -138,13 +138,11 @@ app.get("/", (req, res) => {
 });
 
 
-///////// test db
 db.query("SELECT 1")
   .then(() => console.log("DB connected ✅"))
   .catch(err => console.error("DB connection failed ❌", err.message));
 
 
-////////////////// holds TIME
 setInterval(async () => {
   try {
     await db.query(`

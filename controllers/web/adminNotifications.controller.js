@@ -1,9 +1,8 @@
 const db = require("../../config/db");
-const {
-  sendNotificationToUser,
-} = require("../../utils/sendNotification");
+const {sendNotificationToUser,} = require("../../utils/sendNotification");
 
 const admin = require("../../utils/firebase");
+
 
 // ================= GLOBAL =================
 exports.sendGlobalNotification =
@@ -79,8 +78,7 @@ AND fcm_token != ''
 
 
 // ================= USER =================
-exports.sendUserNotification =
-  async (req, res) => {
+exports.sendUserNotification = async (req, res) => {
 
     const {
       user_id,
@@ -117,9 +115,7 @@ exports.sendUserNotification =
   };
 
 // ================= GET ALL =================
-exports.getAllNotifications =
-  async (req, res) => {
-
+exports.getAllNotifications = async (req, res) => {
     try {
 
       const [rows] = await db.query(`
@@ -149,9 +145,8 @@ exports.getAllNotifications =
   };
 
 
-//delete notification
-exports.deleteNotification =
-  async (req, res) => {
+// ================= deleteNotification =================
+exports.deleteNotification = async (req, res) => {
 
     const { id } = req.params;
 

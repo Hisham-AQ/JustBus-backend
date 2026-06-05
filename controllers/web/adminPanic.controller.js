@@ -1,7 +1,7 @@
 const db = require("../../config/db");
 
-// ================= GET ALL ALERTS =================
 
+// ================= GET ALL ALERTS =================
 exports.getAlerts = async (req, res) => {
 
   try {

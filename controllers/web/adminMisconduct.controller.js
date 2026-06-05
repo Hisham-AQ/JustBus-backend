@@ -1,7 +1,7 @@
 const db = require("../../config/db");
 
-// ================= GET REPORTS =================
 
+// ================= GET REPORTS =================
 exports.getReports = async (req, res) => {
 
   try {
@@ -64,8 +64,8 @@ exports.getReports = async (req, res) => {
   }
 };
 
-// ================= RESOLVE =================
 
+// ================= RESOLVE =================
 exports.resolveReport = async (req, res) => {
 
   try {
@@ -102,8 +102,8 @@ exports.resolveReport = async (req, res) => {
   }
 };
 
-// ================= BLACKLIST STUDENT =================
 
+// ================= BLACKLIST STUDENT =================
 exports.blacklistStudent =
   async (req, res) => {
 

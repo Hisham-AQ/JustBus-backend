@@ -6,14 +6,12 @@ exports.getDashboardStats =
 
     try {
 
-      // Active buses
       const [buses] =
         await db.query(`
           SELECT COUNT(*) AS total
           FROM buses
         `);
 
-      // Students onboard
       const [students] =
         await db.query(`
           SELECT COUNT(*) AS total
@@ -21,7 +19,6 @@ exports.getDashboardStats =
           WHERE role = 'student'
         `);
 
-      // Pending parcels
       const [parcels] =
         await db.query(`
           SELECT COUNT(*) AS total
@@ -55,11 +52,9 @@ exports.getDashboardStats =
 };
 
 // ================= WEEKLY TRIPS =================
-exports.getWeeklyTrips =
-  async (req, res) => {
+exports.getWeeklyTrips = async (req, res) => {
 
     try {
-
       const [rows] =
         await db.query(`
 

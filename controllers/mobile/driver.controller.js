@@ -43,6 +43,8 @@ exports.getDriverTrips = async (req, res) => {
     }
 };
 
+
+// ================= getDriverTripById =================
 exports.getDriverTripById = async (req, res) => {
 
     const userId = req.user.id;
@@ -106,6 +108,8 @@ AND t.id = ?`,
     }
 };
 
+
+// ================= getPassengers =================
 exports.getPassengers = async (req, res) => {
 
     const userId = req.user.id;
@@ -210,6 +214,7 @@ exports.getPassengers = async (req, res) => {
 };
 
 
+// ================= startTrip =================
 exports.startTrip = async (req, res) => {
     const userId = req.user.id;
     const { tripId } = req.body;
@@ -273,6 +278,7 @@ AND b.status = 'confirmed'
 };
 
 
+// ================= endTrip =================
 exports.endTrip = async (req, res) => {
     const userId = req.user.id;
 
@@ -352,6 +358,8 @@ AND b.is_boarded = 1
     }
 };
 
+
+// ================= scanTicket =================
 exports.scanTicket = async (req, res) => {
     const { qrToken, tripId } = req.body;
 
@@ -456,7 +464,7 @@ exports.scanTicket = async (req, res) => {
 };
 
 
-
+// ================= dropOffPassenger =================
 exports.dropOffPassenger = async (req, res) => {
     const { seatId, tripId } = req.body;
     try {
@@ -495,7 +503,9 @@ exports.dropOffPassenger = async (req, res) => {
     }
 };
 
-//misconduct
+
+
+// ================= reportMisconduct =================
 exports.reportMisconduct = async (req, res) => {
 
     const userId = req.user.id;
@@ -602,6 +612,8 @@ exports.reportMisconduct = async (req, res) => {
     }
 };
 
+
+// ================= updateLocation =================
 exports.updateLocation = async (req, res) => {
 
     const { tripId, lat, lng } = req.body;

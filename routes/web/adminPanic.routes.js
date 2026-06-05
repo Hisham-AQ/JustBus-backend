@@ -11,7 +11,6 @@ const adminOnly =
 const controller =
   require("../../controllers/web/adminPanic.controller");
 
-// GET ALERTS
 router.get(
   "/",
   authenticateToken,
@@ -19,7 +18,6 @@ router.get(
   controller.getAlerts
 );
 
-// RESOLVE ALERT
 router.put(
   "/:id/resolve",
   authenticateToken,
@@ -27,7 +25,6 @@ router.put(
   controller.resolveAlert
 );
 
-// RESOLVED ALERTS
 router.get(
   "/history",
   authenticateToken,

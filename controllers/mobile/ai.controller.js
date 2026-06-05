@@ -10,33 +10,70 @@ exports.chat = async (req, res) => {
 
     const [trips] = await db.query(`
       SELECT
-        from_city,
-        to_city,
-        departure_time,
-        price
-      FROM trips
-      LIMIT 10
+  t.id,
+  t.from_city,
+  t.to_city,
+  t.departure_time,
+  t.arrival_time,
+  t.price,
+  t.available_seats,
+  t.status,
+  t.trip_date,
+  u.name AS driver_name,
+
+  b.bus_number,
+  b.capacity
+
+FROM trips t
+
+LEFT JOIN drivers d
+ON t.driver_id = d.id
+
+LEFT JOIN users u
+ON d.user_id = u.id
+
+LEFT JOIN buses b
+ON d.bus_id = b.id
+
+WHERE t.status IN ('scheduled','ongoing')
+ORDER BY t.trip_date ASC
+LIMIT 20
     `);
 
     const prompt = `
-
 You are JustBot.
 
+You are the AI assistant of JustBus.
+
 You help students with:
-- bus trips
-- booking
+
+- trip booking
+- routes
 - schedules
-- prices
+- ticket QR codes
+- wallet
+- rewards
+- parcels
+- special trips
+- panic alerts
 - stations
 
-Answer shortly and clearly.
+Rules:
 
-Trips:
+- Answer briefly.
+- Use only available data.
+- If data does not exist say:
+"I don't have that information."
+
+Current Date:
+${new Date().toISOString()}
+
+Available trips:
+
 ${JSON.stringify(trips)}
 
-User:
+User Question:
 ${message}
-
 `;
 
     const response =
@@ -50,9 +87,18 @@ ${message}
 
           messages: [
             {
+              role: "system",
+              content: `
+             You are JustBot,
+             the assistant of the JustBus transportation system.
+             Answer briefly and accurately.
+              Only use provided information.
+             `
+            },
+            {
               role: "user",
               content: prompt,
-            },
+            }
           ],
         },
 

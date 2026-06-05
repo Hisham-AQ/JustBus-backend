@@ -1,6 +1,7 @@
 const db = require("../config/db");
 const admin = require("./firebase");
 
+
 exports.sendNotificationToUser = async ({
   userId,
   title,

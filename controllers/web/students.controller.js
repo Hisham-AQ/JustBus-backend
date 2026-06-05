@@ -1,6 +1,6 @@
 const db = require("../../config/db");
 
-//  GET STUDENTS 
+// ================= getStudents =================
 exports.getStudents = async (req, res) => {
   try {
     const [rows] = await db.query(`
@@ -17,7 +17,8 @@ exports.getStudents = async (req, res) => {
   }
 };
 
-//LEADERBOARD 
+
+// ================= getLeaderboard =================
 exports.getLeaderboard = async (req, res) => {
 
   try {
@@ -65,7 +66,7 @@ exports.getLeaderboard = async (req, res) => {
   }
 };
 
-// BLACKLIST 
+// ================= blacklistStudent =================
 exports.blacklistStudent = async (req, res) => {
   try {
     const { id } = req.params;
@@ -73,11 +74,11 @@ exports.blacklistStudent = async (req, res) => {
 
     await db.query(
       `UPDATE users 
-   SET is_blacklisted = TRUE,
+       SET is_blacklisted = TRUE,
        blacklist_reason = ?,
        blacklist_until = ?
-   WHERE id = ?
-   AND role = 'student'`,
+       WHERE id = ?
+       AND role = 'student'`,
       [reason || null, until || null, id]
     );
 
@@ -89,7 +90,7 @@ exports.blacklistStudent = async (req, res) => {
   }
 };
 
-//MANUAL BLACKLIST 
+// ================= manualBlacklist =================
 exports.manualBlacklist = async (req, res) => {
 
   try {
@@ -152,7 +153,7 @@ exports.manualBlacklist = async (req, res) => {
   }
 };
 
-//  REMOVE BLACKLIST 
+// ================= removeBlacklist =================
 exports.removeBlacklist = async (req, res) => {
   try {
     const { id } = req.params;
@@ -172,7 +173,7 @@ exports.removeBlacklist = async (req, res) => {
   }
 };
 
-//  DELETE 
+// ================= deleteStudent =================
 exports.deleteStudent = async (req, res) => {
   try {
     const { id } = req.params;

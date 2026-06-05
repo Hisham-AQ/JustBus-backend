@@ -1,5 +1,6 @@
 const db = require("../../config/db");
 
+
 // ================= GET DRIVERS =================
 exports.getDrivers = async (req, res) => {
   try {
@@ -79,7 +80,6 @@ exports.createDriver = async (req, res) => {
       busId
     } = req.body;
 
-    // Check existing email
     const [existing] = await db.query(
       `
       SELECT id
@@ -96,13 +96,9 @@ exports.createDriver = async (req, res) => {
       });
     }
 
-    // Hash password
-    const hashedPassword =
-      await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
-    const [userResult] =
-      await db.query(
+    const [userResult] = await db.query(
         `
         INSERT INTO users
         (
@@ -125,7 +121,6 @@ exports.createDriver = async (req, res) => {
     const userId =
       userResult.insertId;
 
-    // Remove old bus assignment
     if (busId) {
 
       await db.execute(
@@ -138,7 +133,6 @@ exports.createDriver = async (req, res) => {
       );
     }
 
-    // Create driver
     await db.query(
       `
       INSERT INTO drivers
@@ -176,6 +170,8 @@ exports.createDriver = async (req, res) => {
   }
 };
 
+
+
 // ================= UPDATE DRIVER =================
 exports.updateDriver = async (req, res) => {
   try {
@@ -185,8 +181,6 @@ exports.updateDriver = async (req, res) => {
       status,
       busId
     } = req.body;
-
-    // Check if bus already assigned
 
     if (busId) {
 
@@ -245,6 +239,7 @@ exports.updateDriver = async (req, res) => {
   }
 };
 
+
 // ================= DELETE DRIVER =================
 exports.deleteDriver = async (req, res) => {
   try {
@@ -259,6 +254,7 @@ exports.deleteDriver = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 // ================= DRIVER ACTIVITY =================
 exports.getDriverActivity =

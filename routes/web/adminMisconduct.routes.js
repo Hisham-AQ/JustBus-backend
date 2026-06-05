@@ -11,7 +11,6 @@ const adminOnly =
 const controller =
   require("../../controllers/web/adminMisconduct.controller");
 
-// Get reports
 router.get(
   "/",
   authenticateToken,
@@ -19,7 +18,6 @@ router.get(
   controller.getReports
 );
 
-// Resolve
 router.put(
   "/resolve/:id",
   authenticateToken,
@@ -27,7 +25,6 @@ router.put(
   controller.resolveReport
 );
 
-// Blacklist
 router.put(
   "/blacklist/:userId",
   authenticateToken,

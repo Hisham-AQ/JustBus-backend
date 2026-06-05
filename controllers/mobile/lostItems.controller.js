@@ -1,6 +1,7 @@
 const db = require("../../config/db");
 
 
+// ================= createReport =================
 exports.createReport = async (req, res) => {
     const userId = req.user?.id;
 
@@ -35,7 +36,7 @@ exports.createReport = async (req, res) => {
     }
 };
 
-// GET MY REPORTS
+// ================= getMyReports =================
 exports.getMyReports = async (req, res) => {
     const userId = req.user.id;
 

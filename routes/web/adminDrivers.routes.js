@@ -11,7 +11,6 @@ const adminOnly =
 const controller =
   require("../../controllers/web/adminDrivers.controller");
 
-// Driver activity
 router.get(
   "/activity",
   authenticateToken,
@@ -19,7 +18,6 @@ router.get(
   controller.getDriverActivity
 );
 
-// Get all drivers
 router.get(
   "/",
   authenticateToken,
@@ -27,7 +25,6 @@ router.get(
   controller.getDrivers
 );
 
-// Create
 router.post(
   "/",
   authenticateToken,
@@ -35,7 +32,6 @@ router.post(
   controller.createDriver
 );
 
-// Update
 router.put(
   "/:id",
   authenticateToken,
@@ -43,7 +39,6 @@ router.put(
   controller.updateDriver
 );
 
-// Delete
 router.delete(
   "/:id",
   authenticateToken,

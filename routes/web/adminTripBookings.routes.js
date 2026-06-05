@@ -12,7 +12,6 @@ const controller = require(
   "../../controllers/web/adminTripBookings.controller"
 );
 
-// ================= GET ALL TRIP BOOKINGS =================
 router.get(
   "/",
   authenticateToken,
@@ -20,7 +19,6 @@ router.get(
   controller.getTripBookings
 );
 
-// ================= GET PASSENGERS =================
 router.get(
   "/:id/passengers",
   authenticateToken,

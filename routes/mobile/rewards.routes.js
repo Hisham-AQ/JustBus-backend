@@ -6,7 +6,6 @@ const allowRoles = require("../../middleware/roleMiddleware");
 
 const rewardsController = require("../../controllers/mobile/rewards.controller");
 
-// GET rules
 router.get(
   "/rules",
   authenticateToken,
@@ -14,7 +13,6 @@ router.get(
   rewardsController.getRules
 );
 
-// UPDATE rules
 router.put(
   "/rules",
   authenticateToken,

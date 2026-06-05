@@ -92,6 +92,7 @@ plateNumber ?? null,
   }
 };
 
+
 // ================= DELETE BUS =================
 exports.deleteBus = async (req, res) => {
   try {
@@ -107,7 +108,8 @@ exports.deleteBus = async (req, res) => {
   }
 };
 
-// ================= OPTIONAL =================
+
+// ================= getBusLocations =================
 exports.getBusLocations = async (req, res) => {
   res.json([]);
 };

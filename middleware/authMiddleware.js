@@ -3,7 +3,6 @@ const jwt = require("jsonwebtoken");
 module.exports = function authenticateToken(req, res, next) {
   const authHeader = req.headers.authorization;
 
-  // Expect: Authorization: Bearer TOKEN
   if (!authHeader) {
     return res.status(401).json({ message: "Access token missing" });
   }
@@ -22,10 +21,8 @@ const token = authHeader.split(" ")[1];
 
 req.user = decoded;
 
-    // Attach user info to request
     req.user = decoded;
     
-
     next();
     
   } catch (err) {

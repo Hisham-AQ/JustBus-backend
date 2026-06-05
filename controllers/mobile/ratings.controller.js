@@ -1,9 +1,10 @@
 const db = require("../../config/db");
 
+
+
+// ================= submitRating =================
 exports.submitRating = async (req, res) => {
-
     const userId = req.user.id;
-
     const {
         tripId,
         driverRating,
@@ -13,7 +14,6 @@ exports.submitRating = async (req, res) => {
     } = req.body;
 
     try {
-
         await db.query(
             `
             INSERT INTO ratings
