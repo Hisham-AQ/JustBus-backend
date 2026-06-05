@@ -42,11 +42,15 @@ LIMIT 20
 
     const lowerMessage = message.toLowerCase();
 
-    if (
+    const isTripQuestion =
       lowerMessage.includes("trip") ||
-      lowerMessage.includes("available") ||
-      lowerMessage.includes("schedule")
-    ) {
+      lowerMessage.includes("trips") ||
+      lowerMessage.includes("available trip") ||
+      lowerMessage.includes("available trips") ||
+      lowerMessage.includes("show trips") ||
+      lowerMessage.includes("show available trips")
+
+    if (isTripQuestion) {
       return res.json({
         reply: "",
         trips
@@ -103,10 +107,17 @@ ${message}
             {
               role: "system",
               content: `
-             You are JustBot,
-             the assistant of the JustBus transportation system.
-             Answer briefly and accurately.
-              Only use provided information.
+           You are JustBot.
+
+           You are the official assistant of the JustBus system.
+
+         Rules:
+         - Answer briefly and clearly.
+         - Use only provided information.
+         - Never invent data.
+         - If information is unavailable, say:
+           "I don't have that information."
+         - Be friendly and professional.
              `
             },
             {
@@ -129,16 +140,14 @@ ${message}
       );
 
     const reply =
-
       response.data
         ?.choices?.[0]
         ?.message?.content ||
-
       "ما قدرت أفهم 😅";
 
     res.json({
       reply,
-      trips,
+      trips: [],
     });
 
   } catch (err) {
