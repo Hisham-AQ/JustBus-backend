@@ -40,6 +40,20 @@ ORDER BY t.trip_date ASC
 LIMIT 20
     `);
 
+    const lowerMessage = message.toLowerCase();
+
+    if (
+      lowerMessage.includes("trip") ||
+      lowerMessage.includes("available") ||
+      lowerMessage.includes("schedule")
+    ) {
+      return res.json({
+        reply: "",
+        trips
+      });
+    }
+
+
     const prompt = `
 You are JustBot.
 
