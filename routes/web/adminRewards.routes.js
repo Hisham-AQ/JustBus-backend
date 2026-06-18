@@ -13,6 +13,20 @@ const controller = require(
 );
 
 router.get(
+  "/rules",
+  authenticateToken,
+  adminOnly,
+  controller.getRewardRules
+);
+
+router.put(
+  "/rules",
+  authenticateToken,
+  adminOnly,
+  controller.updateRewardRules
+);
+
+router.get(
   "/",
   authenticateToken,
   adminOnly,
@@ -26,6 +40,7 @@ router.post(
   controller.createReward
 );
 
+
 router.put(
   "/:id",
   authenticateToken,
@@ -38,20 +53,6 @@ router.delete(
   authenticateToken,
   adminOnly,
   controller.deleteReward
-);
-
-router.get(
-  "/rules",
-  authenticateToken,
-  adminOnly,
-  controller.getRewardRules
-);
-
-router.put(
-  "/rules",
-  authenticateToken,
-  adminOnly,
-  controller.updateRewardRules
 );
 
 module.exports = router;

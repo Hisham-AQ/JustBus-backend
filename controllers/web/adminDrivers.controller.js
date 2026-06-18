@@ -96,6 +96,12 @@ exports.createDriver = async (req, res) => {
       });
     }
 
+    if (!email || !password) {
+  return res.status(400).json({
+    message: "Email and password are required"
+  });
+}
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const [userResult] = await db.query(
