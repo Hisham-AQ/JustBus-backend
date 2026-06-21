@@ -134,8 +134,6 @@ WHERE id = ?
       });
     }
 
-
-
     await db.query(
       `
       UPDATE parcel_requests

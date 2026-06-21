@@ -82,9 +82,7 @@ exports.approveRequest = async (req, res) => {
       });
     }
 
-    const bookingId =
-      requests[0].booking_id;
-
+    const bookingId = requests[0].booking_id;
     await conn.query(
       `
       UPDATE booking_cancellation_requests
@@ -296,6 +294,7 @@ exports.approveRequest = async (req, res) => {
     });
 
 
+    //release the seat
     await conn.query(
       `
       UPDATE trips

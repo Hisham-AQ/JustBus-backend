@@ -39,11 +39,8 @@ exports.getAllReports = async (req, res) => {
 exports.updateReportStatus = async (req, res) => {
 
     const { id } = req.params;
-
     const { status } = req.body;
-
     try {
-
         const [items] = await db.query(`
   SELECT
     item_name,
